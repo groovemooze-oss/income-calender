@@ -47,3 +47,15 @@ export function useSchedules() {
 
   return { schedules, saveSchedule, deleteSchedule, clearCategory }
 }
+
+// Most recent schedule at the same category, excluding `excludeDate` (the
+// entry currently being edited) — used to prefill a new entry's times.
+export function findLatestByCategory(schedules, categoryId, excludeDate) {
+  if (!categoryId) return null
+  let latest = null
+  for (const entry of Object.values(schedules)) {
+    if (entry.categoryId !== categoryId || entry.date === excludeDate) continue
+    if (!latest || entry.date > latest.date) latest = entry
+  }
+  return latest
+}

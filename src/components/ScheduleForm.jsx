@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { workedMinutes, formatHours } from '../lib/date'
+import { findLatestByCategory } from '../lib/useSchedules'
 
 const EMPTY = { startTime: '09:00', endTime: '18:00', breakMinutes: 60, categoryId: '' }
 
 // Parent remounts this component (via key={date}) whenever the selected
 // date changes, so form state can be initialized once from `existing`.
-export default function ScheduleForm({ date, existing, categories, onSave, onDelete, onAddCategory }) {
+export default function ScheduleForm({ date, existing, categories, schedules, onSave, onDelete, onAddCategory }) {
   const [form, setForm] = useState(existing ? { ...existing, categoryId: existing.categoryId ?? '' } : EMPTY)
   const [newCategoryName, setNewCategoryName] = useState('')
 
@@ -22,6 +23,22 @@ export default function ScheduleForm({ date, existing, categories, onSave, onDel
   function handleChange(e) {
     const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  // Selecting a workplace prefills that workplace's most recent shift times
+  // (still editable) so recurring shifts don't need to be retyped.
+  function handleCategoryChange(e) {
+    const categoryId = e.target.value
+    const previous = findLatestByCategory(schedules, categoryId, date)
+    setForm((prev) => ({
+      ...prev,
+      categoryId,
+      ...(previous && {
+        startTime: previous.startTime,
+        endTime: previous.endTime,
+        breakMinutes: previous.breakMinutes,
+      }),
+    }))
   }
 
   function handleSubmit(e) {
@@ -49,7 +66,7 @@ export default function ScheduleForm({ date, existing, categories, onSave, onDel
         <select
           name="categoryId"
           value={form.categoryId}
-          onChange={handleChange}
+          onChange={handleCategoryChange}
           className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none"
         >
           <option value="">미지정</option>

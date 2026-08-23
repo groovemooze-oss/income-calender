@@ -89,6 +89,7 @@ export default function App() {
           date={selectedDate}
           existing={selectedDate ? schedules[selectedDate] : null}
           categories={categories}
+          schedules={schedules}
           onSave={handleSave}
           onDelete={handleDelete}
           onAddCategory={addCategory}
