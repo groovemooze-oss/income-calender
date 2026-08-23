@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import Calendar from './components/Calendar'
 import ScheduleForm from './components/ScheduleForm'
 import CategorySummary from './components/CategorySummary'
-import { useSchedules } from './lib/useSchedules'
+import { useSchedules, allEntries } from './lib/useSchedules'
 import { useCategories } from './lib/useCategories'
 import { workedMinutes, formatHours } from './lib/date'
 import { calculatePay, formatWon } from './lib/pay'
@@ -12,14 +12,14 @@ export default function App() {
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
   const [selectedDate, setSelectedDate] = useState(null)
-  const { schedules, saveSchedule, deleteSchedule, clearCategory } = useSchedules()
-  const { categories, addCategory, removeCategory, updateCategory } = useCategories()
+  const { schedules, addSchedule, updateSchedule, deleteSchedule, clearCategory } = useSchedules()
+  const { categories, addCategory, removeCategory, updateCategory, setCategoryNoBreak } = useCategories()
 
   const categoriesById = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c])), [categories])
 
   const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`
   const monthlySchedules = useMemo(
-    () => Object.values(schedules).filter((s) => s.date.startsWith(monthPrefix)),
+    () => allEntries(schedules).filter((s) => s.date.startsWith(monthPrefix)),
     [schedules, monthPrefix],
   )
   const monthlyMinutes = useMemo(
@@ -51,14 +51,6 @@ export default function App() {
   function goToday() {
     setYear(today.getFullYear())
     setMonth(today.getMonth())
-  }
-
-  function handleSave(entry) {
-    saveSchedule(entry)
-  }
-
-  function handleDelete(date) {
-    deleteSchedule(date)
   }
 
   function handleRemoveCategory(id) {
@@ -106,12 +98,14 @@ export default function App() {
         <ScheduleForm
           key={selectedDate}
           date={selectedDate}
-          existing={selectedDate ? schedules[selectedDate] : null}
+          dayEntries={selectedDate ? schedules[selectedDate] || [] : []}
           categories={categories}
           schedules={schedules}
-          onSave={handleSave}
-          onDelete={handleDelete}
+          onAdd={addSchedule}
+          onUpdate={updateSchedule}
+          onDelete={deleteSchedule}
           onAddCategory={addCategory}
+          onSetCategoryNoBreak={setCategoryNoBreak}
         />
       </main>
     </div>
