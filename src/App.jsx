@@ -12,7 +12,7 @@ export default function App() {
   const [month, setMonth] = useState(today.getMonth())
   const [selectedDate, setSelectedDate] = useState(null)
   const { schedules, saveSchedule, deleteSchedule, clearCategory } = useSchedules()
-  const { categories, addCategory, removeCategory } = useCategories()
+  const { categories, addCategory, removeCategory, renameCategory } = useCategories()
 
   const categoriesById = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c])), [categories])
 
@@ -77,7 +77,12 @@ export default function App() {
             onNextMonth={goNextMonth}
             onToday={goToday}
           />
-          <CategorySummary categories={categories} schedules={schedules} onRemoveCategory={handleRemoveCategory} />
+          <CategorySummary
+            categories={categories}
+            schedules={schedules}
+            onRemoveCategory={handleRemoveCategory}
+            onRenameCategory={renameCategory}
+          />
         </div>
         <ScheduleForm
           key={selectedDate}

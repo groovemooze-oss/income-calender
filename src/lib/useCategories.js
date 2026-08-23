@@ -36,5 +36,11 @@ export function useCategories() {
     setCategories((prev) => prev.filter((c) => c.id !== id))
   }
 
-  return { categories, addCategory, removeCategory }
+  function renameCategory(id, name) {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, name: trimmed } : c)))
+  }
+
+  return { categories, addCategory, removeCategory, renameCategory }
 }

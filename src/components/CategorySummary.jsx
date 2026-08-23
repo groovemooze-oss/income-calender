@@ -1,15 +1,29 @@
+import { useState } from 'react'
 import { workedMinutes, formatHours } from '../lib/date'
 import { colorFor } from '../lib/colors'
 
 // For each category, records are listed in date order and, starting from
 // the 2nd record, annotated with the running cumulative hours worked at
 // that workplace up to and including that record.
-export default function CategorySummary({ categories, schedules, onRemoveCategory }) {
+export default function CategorySummary({ categories, schedules, onRemoveCategory, onRenameCategory }) {
+  const [editingId, setEditingId] = useState(null)
+  const [draftName, setDraftName] = useState('')
+
   if (categories.length === 0) {
     return null
   }
 
   const allSchedules = Object.values(schedules)
+
+  function startEditing(category) {
+    setEditingId(category.id)
+    setDraftName(category.name)
+  }
+
+  function commitEditing(id) {
+    onRenameCategory(id, draftName)
+    setEditingId(null)
+  }
 
   return (
     <div className="flex flex-col gap-3 rounded-xl bg-white p-5 ring-1 ring-slate-200">
@@ -22,18 +36,41 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
 
         let cumulativeMinutes = 0
         const color = colorFor(category.color)
+        const isEditing = editingId === category.id
 
         return (
           <div key={category.id} className="rounded-lg border border-slate-100 p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className={`h-2.5 w-2.5 rounded-full ${color.dot}`} />
-                <span className="text-sm font-semibold text-slate-700">{category.name}</span>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${color.dot}`} />
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={draftName}
+                    autoFocus
+                    onChange={(e) => setDraftName(e.target.value)}
+                    onBlur={() => commitEditing(category.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') commitEditing(category.id)
+                      if (e.key === 'Escape') setEditingId(null)
+                    }}
+                    className="min-w-0 flex-1 rounded border border-indigo-300 px-1.5 py-0.5 text-sm text-slate-700 focus:outline-none"
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => startEditing(category)}
+                    className="truncate text-left text-sm font-semibold text-slate-700 hover:underline"
+                    title="이름 수정"
+                  >
+                    {category.name}
+                  </button>
+                )}
               </div>
               <button
                 type="button"
                 onClick={() => onRemoveCategory(category.id)}
-                className="text-xs text-slate-400 hover:text-red-500"
+                className="shrink-0 text-xs text-slate-400 hover:text-red-500"
               >
                 삭제
               </button>
