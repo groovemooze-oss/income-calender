@@ -52,7 +52,7 @@ export default function Calendar({ year, month, schedules, categoriesById, selec
         {days.map((date) => {
           const key = toDateKey(date.getFullYear(), date.getMonth(), date.getDate())
           const inMonth = isSameMonth(date, year, month)
-          const dayEntries = schedules[key] || []
+          const shift = schedules[key]
           const isToday = key === today
           const isSelected = key === selectedDate
           const dow = date.getDay()
@@ -73,11 +73,8 @@ export default function Calendar({ year, month, schedules, categoriesById, selec
               >
                 {date.getDate()}
               </span>
-              {dayEntries.map((shift) => (
-                <div
-                  key={shift.id}
-                  className={`w-full rounded-md px-1 py-0.5 text-[10px] leading-tight sm:text-xs ${colorFor(categoriesById[shift.categoryId]?.color).badge}`}
-                >
+              {shift && (
+                <div className={`w-full rounded-md px-1 py-0.5 text-[10px] leading-tight sm:text-xs ${colorFor(categoriesById[shift.categoryId]?.color).badge}`}>
                   {categoriesById[shift.categoryId] && (
                     <div className="truncate font-semibold">{categoriesById[shift.categoryId].name}</div>
                   )}
@@ -88,7 +85,7 @@ export default function Calendar({ year, month, schedules, categoriesById, selec
                     {formatHours(workedMinutes(shift.startTime, shift.endTime, shift.breakMinutes))}h
                   </div>
                 </div>
-              ))}
+              )}
             </button>
           )
         })}

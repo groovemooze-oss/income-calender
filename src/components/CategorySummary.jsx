@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { workedMinutes, formatHours } from '../lib/date'
 import { colorFor } from '../lib/colors'
 import { calculatePay, formatWon } from '../lib/pay'
-import { allEntries } from '../lib/useSchedules'
 
 // For each category, records are listed in date order and, starting from
 // the 2nd record, annotated with the running cumulative hours (and pay,
@@ -16,7 +15,7 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
     return null
   }
 
-  const scheduleEntries = allEntries(schedules)
+  const allSchedules = Object.values(schedules)
 
   function startEditing(category) {
     setEditingId(category.id)
@@ -39,9 +38,9 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
       <h3 className="text-base font-semibold text-slate-800">근무처별 누적 근무시간</h3>
 
       {categories.map((category) => {
-        const records = scheduleEntries
+        const records = allSchedules
           .filter((s) => s.categoryId === category.id)
-          .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
+          .sort((a, b) => a.date.localeCompare(b.date))
 
         let cumulativeMinutes = 0
         const color = colorFor(category.color)
@@ -119,7 +118,7 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
                     const minutes = workedMinutes(record.startTime, record.endTime, record.breakMinutes)
                     cumulativeMinutes += minutes
                     return (
-                      <tr key={record.id} className="border-t border-slate-50">
+                      <tr key={record.date} className="border-t border-slate-50">
                         <td className="py-1 text-slate-600">{record.date}</td>
                         <td className="py-1 text-slate-600">{formatHours(minutes)}h</td>
                         <td className="py-1 font-medium text-slate-700">

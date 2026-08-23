@@ -11,13 +11,7 @@ function loadSchedules() {
   }
 }
 
-function makeId() {
-  return `sch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-}
-
-// Schedules are keyed by date ("YYYY-MM-DD") -> array of entries, since a
-// day can have shifts at more than one workplace:
-// { id, date, startTime, endTime, breakMinutes, categoryId, noBreak }
+// Schedules are keyed by date ("YYYY-MM-DD") -> { date, startTime, endTime, breakMinutes, categoryId }
 export function useSchedules() {
   const [schedules, setSchedules] = useState(loadSchedules)
 
@@ -25,47 +19,17 @@ export function useSchedules() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(schedules))
   }, [schedules])
 
-  function addSchedule({ date, startTime, endTime, breakMinutes, categoryId, noBreak }) {
-    const entry = {
-      id: makeId(),
-      date,
-      startTime,
-      endTime,
-      breakMinutes: noBreak ? 0 : Number(breakMinutes) || 0,
-      categoryId: categoryId || null,
-      noBreak: !!noBreak,
-    }
-    setSchedules((prev) => ({ ...prev, [date]: [...(prev[date] || []), entry] }))
-    return entry
-  }
-
-  function updateSchedule(date, id, { startTime, endTime, breakMinutes, categoryId, noBreak }) {
+  function saveSchedule({ date, startTime, endTime, breakMinutes, categoryId }) {
     setSchedules((prev) => ({
       ...prev,
-      [date]: (prev[date] || []).map((e) =>
-        e.id === id
-          ? {
-              ...e,
-              startTime,
-              endTime,
-              breakMinutes: noBreak ? 0 : Number(breakMinutes) || 0,
-              categoryId: categoryId || null,
-              noBreak: !!noBreak,
-            }
-          : e,
-      ),
+      [date]: { date, startTime, endTime, breakMinutes: Number(breakMinutes) || 0, categoryId: categoryId || null },
     }))
   }
 
-  function deleteSchedule(date, id) {
+  function deleteSchedule(date) {
     setSchedules((prev) => {
-      const remaining = (prev[date] || []).filter((e) => e.id !== id)
       const next = { ...prev }
-      if (remaining.length > 0) {
-        next[date] = remaining
-      } else {
-        delete next[date]
-      }
+      delete next[date]
       return next
     })
   }
@@ -74,28 +38,23 @@ export function useSchedules() {
   function clearCategory(categoryId) {
     setSchedules((prev) => {
       const next = {}
-      for (const [date, entries] of Object.entries(prev)) {
-        next[date] = entries.map((e) => (e.categoryId === categoryId ? { ...e, categoryId: null } : e))
+      for (const [date, entry] of Object.entries(prev)) {
+        next[date] = entry.categoryId === categoryId ? { ...entry, categoryId: null } : entry
       }
       return next
     })
   }
 
-  return { schedules, addSchedule, updateSchedule, deleteSchedule, clearCategory }
+  return { schedules, saveSchedule, deleteSchedule, clearCategory }
 }
 
-// Flattens the { date: entry[] } map into a single list of entries.
-export function allEntries(schedules) {
-  return Object.values(schedules).flat()
-}
-
-// Most recent schedule at the same category, excluding `excludeId` (the
+// Most recent schedule at the same category, excluding `excludeDate` (the
 // entry currently being edited) — used to prefill a new entry's times.
-export function findLatestByCategory(schedules, categoryId, excludeId) {
+export function findLatestByCategory(schedules, categoryId, excludeDate) {
   if (!categoryId) return null
   let latest = null
-  for (const entry of allEntries(schedules)) {
-    if (entry.categoryId !== categoryId || entry.id === excludeId) continue
+  for (const entry of Object.values(schedules)) {
+    if (entry.categoryId !== categoryId || entry.date === excludeDate) continue
     if (!latest || entry.date > latest.date) latest = entry
   }
   return latest
