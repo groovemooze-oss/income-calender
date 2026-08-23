@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { workedMinutes, formatHours } from '../lib/date'
 import { findLatestByCategory } from '../lib/useSchedules'
+import { calculatePay, formatWon } from '../lib/pay'
 
 const EMPTY = { startTime: '09:00', endTime: '18:00', breakMinutes: 60, categoryId: '' }
 
@@ -9,6 +10,7 @@ const EMPTY = { startTime: '09:00', endTime: '18:00', breakMinutes: 60, category
 export default function ScheduleForm({ date, existing, categories, schedules, onSave, onDelete, onAddCategory }) {
   const [form, setForm] = useState(existing ? { ...existing, categoryId: existing.categoryId ?? '' } : EMPTY)
   const [newCategoryName, setNewCategoryName] = useState('')
+  const [newCategoryWage, setNewCategoryWage] = useState('')
 
   if (!date) {
     return (
@@ -19,6 +21,7 @@ export default function ScheduleForm({ date, existing, categories, schedules, on
   }
 
   const minutes = workedMinutes(form.startTime, form.endTime, form.breakMinutes)
+  const selectedCategory = categories.find((c) => c.id === form.categoryId)
 
   function handleChange(e) {
     const { name, value } = e.target
@@ -47,10 +50,11 @@ export default function ScheduleForm({ date, existing, categories, schedules, on
   }
 
   function handleAddCategory() {
-    const created = onAddCategory(newCategoryName)
+    const created = onAddCategory(newCategoryName, newCategoryWage)
     if (created) {
       setForm((prev) => ({ ...prev, categoryId: created.id }))
       setNewCategoryName('')
+      setNewCategoryWage('')
     }
   }
 
@@ -73,6 +77,7 @@ export default function ScheduleForm({ date, existing, categories, schedules, on
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
+              {c.hourlyWage > 0 ? ` · 시급 ${formatWon(c.hourlyWage)}` : ''}
             </option>
           ))}
         </select>
@@ -85,6 +90,15 @@ export default function ScheduleForm({ date, existing, categories, schedules, on
           onChange={(e) => setNewCategoryName(e.target.value)}
           placeholder="새 근무처 이름"
           className="flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+        />
+        <input
+          type="number"
+          min="0"
+          step="10"
+          value={newCategoryWage}
+          onChange={(e) => setNewCategoryWage(e.target.value)}
+          placeholder="시급"
+          className="w-20 rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
         />
         <button
           type="button"
@@ -135,6 +149,12 @@ export default function ScheduleForm({ date, existing, categories, schedules, on
 
       <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
         실 근무시간: <span className="font-semibold text-indigo-600">{formatHours(minutes)}시간</span>
+        {selectedCategory && selectedCategory.hourlyWage > 0 && (
+          <>
+            {' · '}
+            <span className="font-semibold text-indigo-600">{formatWon(calculatePay(minutes, selectedCategory.hourlyWage))}</span>
+          </>
+        )}
       </div>
 
       <div className="mt-auto flex gap-2">

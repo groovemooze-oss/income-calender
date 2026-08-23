@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { workedMinutes, formatHours } from '../lib/date'
 import { colorFor } from '../lib/colors'
+import { calculatePay, formatWon } from '../lib/pay'
 
 // For each category, records are listed in date order and, starting from
-// the 2nd record, annotated with the running cumulative hours worked at
-// that workplace up to and including that record.
-export default function CategorySummary({ categories, schedules, onRemoveCategory, onRenameCategory }) {
+// the 2nd record, annotated with the running cumulative hours (and pay,
+// at that workplace's hourly wage) worked up to and including that record.
+export default function CategorySummary({ categories, schedules, onRemoveCategory, onUpdateCategory }) {
   const [editingId, setEditingId] = useState(null)
   const [draftName, setDraftName] = useState('')
+  const [draftWage, setDraftWage] = useState('')
 
   if (categories.length === 0) {
     return null
@@ -18,11 +20,17 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
   function startEditing(category) {
     setEditingId(category.id)
     setDraftName(category.name)
+    setDraftWage(String(category.hourlyWage || ''))
   }
 
   function commitEditing(id) {
-    onRenameCategory(id, draftName)
+    onUpdateCategory(id, { name: draftName, hourlyWage: draftWage })
     setEditingId(null)
+  }
+
+  function handleKeyDown(e, id) {
+    if (e.key === 'Enter') commitEditing(id)
+    if (e.key === 'Escape') setEditingId(null)
   }
 
   return (
@@ -44,26 +52,44 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
               <div className="flex min-w-0 flex-1 items-center gap-2">
                 <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${color.dot}`} />
                 {isEditing ? (
-                  <input
-                    type="text"
-                    value={draftName}
-                    autoFocus
-                    onChange={(e) => setDraftName(e.target.value)}
-                    onBlur={() => commitEditing(category.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') commitEditing(category.id)
-                      if (e.key === 'Escape') setEditingId(null)
-                    }}
-                    className="min-w-0 flex-1 rounded border border-indigo-300 px-1.5 py-0.5 text-sm text-slate-700 focus:outline-none"
-                  />
+                  <>
+                    <input
+                      type="text"
+                      value={draftName}
+                      autoFocus
+                      onChange={(e) => setDraftName(e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, category.id)}
+                      className="min-w-0 flex-1 rounded border border-indigo-300 px-1.5 py-0.5 text-sm text-slate-700 focus:outline-none"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      step="10"
+                      value={draftWage}
+                      onChange={(e) => setDraftWage(e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, category.id)}
+                      placeholder="시급"
+                      className="w-16 shrink-0 rounded border border-indigo-300 px-1.5 py-0.5 text-sm text-slate-700 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => commitEditing(category.id)}
+                      className="shrink-0 text-xs font-medium text-indigo-600 hover:underline"
+                    >
+                      저장
+                    </button>
+                  </>
                 ) : (
                   <button
                     type="button"
                     onClick={() => startEditing(category)}
-                    className="truncate text-left text-sm font-semibold text-slate-700 hover:underline"
-                    title="이름 수정"
+                    className="flex min-w-0 items-baseline gap-1.5 text-left hover:underline"
+                    title="이름/시급 수정"
                   >
-                    {category.name}
+                    <span className="truncate text-sm font-semibold text-slate-700">{category.name}</span>
+                    {category.hourlyWage > 0 && (
+                      <span className="shrink-0 text-xs text-slate-400">시급 {formatWon(category.hourlyWage)}</span>
+                    )}
                   </button>
                 )}
               </div>
@@ -96,7 +122,18 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
                         <td className="py-1 text-slate-600">{record.date}</td>
                         <td className="py-1 text-slate-600">{formatHours(minutes)}h</td>
                         <td className="py-1 font-medium text-slate-700">
-                          {index >= 1 ? `${formatHours(cumulativeMinutes)}h` : '—'}
+                          {index >= 1 ? (
+                            <>
+                              {formatHours(cumulativeMinutes)}h
+                              {category.hourlyWage > 0 && (
+                                <span className="ml-1 text-indigo-500">
+                                  ({formatWon(calculatePay(cumulativeMinutes, category.hourlyWage))})
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            '—'
+                          )}
                         </td>
                       </tr>
                     )

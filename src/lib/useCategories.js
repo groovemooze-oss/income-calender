@@ -16,7 +16,7 @@ function makeId() {
   return `cat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
-// Categories represent workplaces: { id, name, color }
+// Categories represent workplaces: { id, name, color, hourlyWage }
 export function useCategories() {
   const [categories, setCategories] = useState(loadCategories)
 
@@ -24,10 +24,10 @@ export function useCategories() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(categories))
   }, [categories])
 
-  function addCategory(name) {
+  function addCategory(name, hourlyWage) {
     const trimmed = name.trim()
     if (!trimmed) return null
-    const category = { id: makeId(), name: trimmed, color: nextColorKey(categories.length) }
+    const category = { id: makeId(), name: trimmed, color: nextColorKey(categories.length), hourlyWage: Number(hourlyWage) || 0 }
     setCategories((prev) => [...prev, category])
     return category
   }
@@ -36,11 +36,13 @@ export function useCategories() {
     setCategories((prev) => prev.filter((c) => c.id !== id))
   }
 
-  function renameCategory(id, name) {
+  function updateCategory(id, { name, hourlyWage }) {
     const trimmed = name.trim()
     if (!trimmed) return
-    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, name: trimmed } : c)))
+    setCategories((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, name: trimmed, hourlyWage: Number(hourlyWage) || 0 } : c)),
+    )
   }
 
-  return { categories, addCategory, removeCategory, renameCategory }
+  return { categories, addCategory, removeCategory, updateCategory }
 }

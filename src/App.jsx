@@ -5,6 +5,7 @@ import CategorySummary from './components/CategorySummary'
 import { useSchedules } from './lib/useSchedules'
 import { useCategories } from './lib/useCategories'
 import { workedMinutes, formatHours } from './lib/date'
+import { calculatePay, formatWon } from './lib/pay'
 
 export default function App() {
   const today = new Date()
@@ -12,16 +13,28 @@ export default function App() {
   const [month, setMonth] = useState(today.getMonth())
   const [selectedDate, setSelectedDate] = useState(null)
   const { schedules, saveSchedule, deleteSchedule, clearCategory } = useSchedules()
-  const { categories, addCategory, removeCategory, renameCategory } = useCategories()
+  const { categories, addCategory, removeCategory, updateCategory } = useCategories()
 
   const categoriesById = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c])), [categories])
 
   const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`
-  const monthlyMinutes = useMemo(() => {
-    return Object.values(schedules)
-      .filter((s) => s.date.startsWith(monthPrefix))
-      .reduce((sum, s) => sum + workedMinutes(s.startTime, s.endTime, s.breakMinutes), 0)
-  }, [schedules, monthPrefix])
+  const monthlySchedules = useMemo(
+    () => Object.values(schedules).filter((s) => s.date.startsWith(monthPrefix)),
+    [schedules, monthPrefix],
+  )
+  const monthlyMinutes = useMemo(
+    () => monthlySchedules.reduce((sum, s) => sum + workedMinutes(s.startTime, s.endTime, s.breakMinutes), 0),
+    [monthlySchedules],
+  )
+  const monthlyPay = useMemo(
+    () =>
+      monthlySchedules.reduce((sum, s) => {
+        const category = categoriesById[s.categoryId]
+        if (!category) return sum
+        return sum + calculatePay(workedMinutes(s.startTime, s.endTime, s.breakMinutes), category.hourlyWage)
+      }, 0),
+    [monthlySchedules, categoriesById],
+  )
 
   function goPrevMonth() {
     const d = new Date(year, month - 1, 1)
@@ -60,6 +73,12 @@ export default function App() {
           <h1 className="text-xl font-bold text-slate-800">알바 근무 스케줄러</h1>
           <div className="text-sm text-slate-500">
             이번 달 근무시간 <span className="font-semibold text-indigo-600">{formatHours(monthlyMinutes)}시간</span>
+            {monthlyPay > 0 && (
+              <>
+                {' · 예상 급여 '}
+                <span className="font-semibold text-indigo-600">{formatWon(monthlyPay)}</span>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -81,7 +100,7 @@ export default function App() {
             categories={categories}
             schedules={schedules}
             onRemoveCategory={handleRemoveCategory}
-            onRenameCategory={renameCategory}
+            onUpdateCategory={updateCategory}
           />
         </div>
         <ScheduleForm
