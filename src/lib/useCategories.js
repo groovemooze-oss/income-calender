@@ -16,7 +16,9 @@ function makeId() {
   return `cat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
-// Categories represent workplaces: { id, name, color, hourlyWage }
+// Categories represent workplaces: { id, name, color, hourlyWage, noBreak }
+// `noBreak` is the workplace's remembered "no break time" preference, used
+// to default the break-time checkbox for new entries at that workplace.
 export function useCategories() {
   const [categories, setCategories] = useState(loadCategories)
 
@@ -27,7 +29,13 @@ export function useCategories() {
   function addCategory(name, hourlyWage) {
     const trimmed = name.trim()
     if (!trimmed) return null
-    const category = { id: makeId(), name: trimmed, color: nextColorKey(categories.length), hourlyWage: Number(hourlyWage) || 0 }
+    const category = {
+      id: makeId(),
+      name: trimmed,
+      color: nextColorKey(categories.length),
+      hourlyWage: Number(hourlyWage) || 0,
+      noBreak: false,
+    }
     setCategories((prev) => [...prev, category])
     return category
   }
@@ -44,5 +52,9 @@ export function useCategories() {
     )
   }
 
-  return { categories, addCategory, removeCategory, updateCategory }
+  function setCategoryNoBreak(id, noBreak) {
+    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, noBreak } : c)))
+  }
+
+  return { categories, addCategory, removeCategory, updateCategory, setCategoryNoBreak }
 }
