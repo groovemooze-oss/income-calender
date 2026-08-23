@@ -5,7 +5,17 @@ const STORAGE_KEY = 'workSchedules'
 function loadSchedules() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : {}
+    const parsed = raw ? JSON.parse(raw) : {}
+    // Defensively drop anything that isn't a well-formed single entry, in
+    // case a previous, incompatible schema (e.g. one entry stored as an
+    // array) is still sitting in this browser's storage.
+    const next = {}
+    for (const [date, entry] of Object.entries(parsed)) {
+      if (entry && typeof entry.startTime === 'string' && typeof entry.endTime === 'string') {
+        next[date] = entry
+      }
+    }
+    return next
   } catch {
     return {}
   }
