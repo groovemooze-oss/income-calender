@@ -1,8 +1,9 @@
 import { getMonthGrid, isSameMonth, toDateKey, todayKey, workedMinutes, formatHours } from '../lib/date'
+import { colorFor } from '../lib/colors'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
-export default function Calendar({ year, month, schedules, selectedDate, onSelectDate, onPrevMonth, onNextMonth, onToday }) {
+export default function Calendar({ year, month, schedules, categoriesById, selectedDate, onSelectDate, onPrevMonth, onNextMonth, onToday }) {
   const days = getMonthGrid(year, month)
   const today = todayKey()
 
@@ -73,11 +74,14 @@ export default function Calendar({ year, month, schedules, selectedDate, onSelec
                 {date.getDate()}
               </span>
               {shift && (
-                <div className="w-full rounded-md bg-indigo-50 px-1 py-0.5 text-[10px] leading-tight text-indigo-700 sm:text-xs">
+                <div className={`w-full rounded-md px-1 py-0.5 text-[10px] leading-tight sm:text-xs ${colorFor(categoriesById[shift.categoryId]?.color).badge}`}>
+                  {categoriesById[shift.categoryId] && (
+                    <div className="truncate font-semibold">{categoriesById[shift.categoryId].name}</div>
+                  )}
                   <div className="font-medium">
                     {shift.startTime}–{shift.endTime}
                   </div>
-                  <div className="text-indigo-500">
+                  <div className="opacity-80">
                     {formatHours(workedMinutes(shift.startTime, shift.endTime, shift.breakMinutes))}h
                   </div>
                 </div>

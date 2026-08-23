@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
 import Calendar from './components/Calendar'
 import ScheduleForm from './components/ScheduleForm'
+import CategorySummary from './components/CategorySummary'
 import { useSchedules } from './lib/useSchedules'
+import { useCategories } from './lib/useCategories'
 import { workedMinutes, formatHours } from './lib/date'
 
 export default function App() {
@@ -9,7 +11,10 @@ export default function App() {
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
   const [selectedDate, setSelectedDate] = useState(null)
-  const { schedules, saveSchedule, deleteSchedule } = useSchedules()
+  const { schedules, saveSchedule, deleteSchedule, clearCategory } = useSchedules()
+  const { categories, addCategory, removeCategory } = useCategories()
+
+  const categoriesById = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c])), [categories])
 
   const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`
   const monthlyMinutes = useMemo(() => {
@@ -43,6 +48,11 @@ export default function App() {
     deleteSchedule(date)
   }
 
+  function handleRemoveCategory(id) {
+    removeCategory(id)
+    clearCategory(id)
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="border-b border-slate-200 bg-white">
@@ -55,22 +65,28 @@ export default function App() {
       </header>
 
       <main className="mx-auto grid max-w-5xl gap-4 px-4 py-6 md:grid-cols-[2fr_1fr]">
-        <Calendar
-          year={year}
-          month={month}
-          schedules={schedules}
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-          onPrevMonth={goPrevMonth}
-          onNextMonth={goNextMonth}
-          onToday={goToday}
-        />
+        <div className="flex flex-col gap-4">
+          <Calendar
+            year={year}
+            month={month}
+            schedules={schedules}
+            categoriesById={categoriesById}
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+            onPrevMonth={goPrevMonth}
+            onNextMonth={goNextMonth}
+            onToday={goToday}
+          />
+          <CategorySummary categories={categories} schedules={schedules} onRemoveCategory={handleRemoveCategory} />
+        </div>
         <ScheduleForm
           key={selectedDate}
           date={selectedDate}
           existing={selectedDate ? schedules[selectedDate] : null}
+          categories={categories}
           onSave={handleSave}
           onDelete={handleDelete}
+          onAddCategory={addCategory}
         />
       </main>
     </div>

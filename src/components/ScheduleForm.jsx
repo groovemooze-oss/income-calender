@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { workedMinutes, formatHours } from '../lib/date'
 
-const EMPTY = { startTime: '09:00', endTime: '18:00', breakMinutes: 60 }
+const EMPTY = { startTime: '09:00', endTime: '18:00', breakMinutes: 60, categoryId: '' }
 
 // Parent remounts this component (via key={date}) whenever the selected
 // date changes, so form state can be initialized once from `existing`.
-export default function ScheduleForm({ date, existing, onSave, onDelete }) {
-  const [form, setForm] = useState(existing ?? EMPTY)
+export default function ScheduleForm({ date, existing, categories, onSave, onDelete, onAddCategory }) {
+  const [form, setForm] = useState(existing ? { ...existing, categoryId: existing.categoryId ?? '' } : EMPTY)
+  const [newCategoryName, setNewCategoryName] = useState('')
 
   if (!date) {
     return (
@@ -28,11 +29,53 @@ export default function ScheduleForm({ date, existing, onSave, onDelete }) {
     onSave({ date, ...form })
   }
 
+  function handleAddCategory() {
+    const created = onAddCategory(newCategoryName)
+    if (created) {
+      setForm((prev) => ({ ...prev, categoryId: created.id }))
+      setNewCategoryName('')
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} className="flex h-full flex-col gap-4 rounded-xl bg-white p-5 ring-1 ring-slate-200">
       <div>
         <h3 className="text-base font-semibold text-slate-800">{date}</h3>
         <p className="text-xs text-slate-400">근무 시작/종료 시간과 휴게시간을 입력하세요.</p>
+      </div>
+
+      <label className="flex flex-col gap-1 text-sm text-slate-600">
+        근무처
+        <select
+          name="categoryId"
+          value={form.categoryId}
+          onChange={handleChange}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none"
+        >
+          <option value="">미지정</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={newCategoryName}
+          onChange={(e) => setNewCategoryName(e.target.value)}
+          placeholder="새 근무처 이름"
+          className="flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={handleAddCategory}
+          className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+        >
+          + 추가
+        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
