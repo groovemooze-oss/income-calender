@@ -21,6 +21,7 @@ export default function ScheduleForm({
 }) {
   const [editingEntryId, setEditingEntryId] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
+  const [showNewCategory, setShowNewCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [newCategoryWage, setNewCategoryWage] = useState('')
   const [newCategoryTax33, setNewCategoryTax33] = useState(false)
@@ -110,7 +111,16 @@ export default function ScheduleForm({
       setNewCategoryWage('')
       setNewCategoryTax33(false)
       setNewCategoryTaxInsurance(false)
+      setShowNewCategory(false)
     }
+  }
+
+  function handleCancelNewCategory() {
+    setNewCategoryName('')
+    setNewCategoryWage('')
+    setNewCategoryTax33(false)
+    setNewCategoryTaxInsurance(false)
+    setShowNewCategory(false)
   }
 
   return (
@@ -166,8 +176,18 @@ export default function ScheduleForm({
           )}
         </div>
 
-        <label className="flex flex-col gap-1 text-sm text-slate-600">
-          근무처
+        <div className="flex flex-col gap-1 text-sm text-slate-600">
+          <div className="flex items-center justify-between">
+            <span>근무처</span>
+            <button
+              type="button"
+              onClick={() => setShowNewCategory((v) => !v)}
+              className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 text-xs font-semibold text-slate-500 hover:bg-slate-50"
+              title="새 근무처 추가"
+            >
+              +
+            </button>
+          </div>
           <select
             name="categoryId"
             value={form.categoryId}
@@ -182,53 +202,67 @@ export default function ScheduleForm({
               </option>
             ))}
           </select>
-        </label>
+        </div>
 
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newCategoryName}
-            onChange={(e) => setNewCategoryName(e.target.value)}
-            placeholder="새 근무처 이름"
-            className="flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
-          />
-          <input
-            type="number"
-            min="0"
-            step="10"
-            value={newCategoryWage}
-            onChange={(e) => setNewCategoryWage(e.target.value)}
-            placeholder="시급"
-            className="w-20 rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
-          />
-          <button
-            type="button"
-            onClick={handleAddCategory}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
-          >
-            + 추가
-          </button>
-        </div>
-        <div className="flex gap-3 text-xs text-slate-500">
-          <label className="flex items-center gap-1.5">
-            <input
-              type="checkbox"
-              checked={newCategoryTax33}
-              onChange={(e) => setNewCategoryTax33(e.target.checked)}
-              className="accent-indigo-600"
-            />
-            3.3% 원천징수
-          </label>
-          <label className="flex items-center gap-1.5">
-            <input
-              type="checkbox"
-              checked={newCategoryTaxInsurance}
-              onChange={(e) => setNewCategoryTaxInsurance(e.target.checked)}
-              className="accent-indigo-600"
-            />
-            사대보험
-          </label>
-        </div>
+        {showNewCategory && (
+          <div className="flex flex-col gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                placeholder="새 근무처 이름"
+                autoFocus
+                className="flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+              />
+              <input
+                type="number"
+                min="0"
+                step="10"
+                value={newCategoryWage}
+                onChange={(e) => setNewCategoryWage(e.target.value)}
+                placeholder="시급"
+                className="w-20 rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+              />
+            </div>
+            <div className="flex gap-3 text-xs text-slate-500">
+              <label className="flex items-center gap-1.5">
+                <input
+                  type="checkbox"
+                  checked={newCategoryTax33}
+                  onChange={(e) => setNewCategoryTax33(e.target.checked)}
+                  className="accent-indigo-600"
+                />
+                3.3% 원천징수
+              </label>
+              <label className="flex items-center gap-1.5">
+                <input
+                  type="checkbox"
+                  checked={newCategoryTaxInsurance}
+                  onChange={(e) => setNewCategoryTaxInsurance(e.target.checked)}
+                  className="accent-indigo-600"
+                />
+                사대보험
+              </label>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleAddCategory}
+                className="flex-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+              >
+                추가
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelNewCategory}
+                className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-white"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <label className="flex flex-col gap-1 text-sm text-slate-600">
