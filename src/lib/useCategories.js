@@ -17,11 +17,12 @@ function makeId() {
 }
 
 // Categories represent workplaces:
-// { id, name, color, hourlyWage, noBreak, tax3_3, taxInsurance }
+// { id, name, color, hourlyWage, noBreak, tax3_3, taxInsurance, includesHolidayPay }
 // `noBreak` is the workplace's remembered "no break time" preference, used
 // to default the break-time checkbox for new entries at that workplace.
 // `tax3_3`/`taxInsurance` control which deductions apply to that
-// workplace's pay (see lib/pay.js).
+// workplace's pay (see lib/pay.js). `includesHolidayPay` means the hourly
+// wage already has 주휴수당 folded in, so it isn't calculated separately.
 export function useCategories() {
   const [categories, setCategories] = useState(loadCategories)
 
@@ -29,7 +30,7 @@ export function useCategories() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(categories))
   }, [categories])
 
-  function addCategory(name, hourlyWage, tax3_3, taxInsurance) {
+  function addCategory(name, hourlyWage, tax3_3, taxInsurance, includesHolidayPay) {
     const trimmed = name.trim()
     if (!trimmed) return null
     const category = {
@@ -40,6 +41,7 @@ export function useCategories() {
       noBreak: false,
       tax3_3: !!tax3_3,
       taxInsurance: !!taxInsurance,
+      includesHolidayPay: !!includesHolidayPay,
     }
     setCategories((prev) => [...prev, category])
     return category
@@ -49,13 +51,20 @@ export function useCategories() {
     setCategories((prev) => prev.filter((c) => c.id !== id))
   }
 
-  function updateCategory(id, { name, hourlyWage, tax3_3, taxInsurance }) {
+  function updateCategory(id, { name, hourlyWage, tax3_3, taxInsurance, includesHolidayPay }) {
     const trimmed = name.trim()
     if (!trimmed) return
     setCategories((prev) =>
       prev.map((c) =>
         c.id === id
-          ? { ...c, name: trimmed, hourlyWage: Number(hourlyWage) || 0, tax3_3: !!tax3_3, taxInsurance: !!taxInsurance }
+          ? {
+              ...c,
+              name: trimmed,
+              hourlyWage: Number(hourlyWage) || 0,
+              tax3_3: !!tax3_3,
+              taxInsurance: !!taxInsurance,
+              includesHolidayPay: !!includesHolidayPay,
+            }
           : c,
       ),
     )

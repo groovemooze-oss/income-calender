@@ -38,7 +38,10 @@ export function formatWon(amount) {
 // condition isn't checked at all.
 export const HOLIDAY_PAY_MIN_HOURS = 15
 
+// If the workplace's hourly wage already has 주휴수당 folded in
+// (category.includesHolidayPay), it must not be added again on top.
 export function calculateHolidayPay(weeklyMinutes, category) {
+  if (category?.includesHolidayPay) return 0
   const weeklyHours = weeklyMinutes / 60
   if (weeklyHours < HOLIDAY_PAY_MIN_HOURS) return 0
   const cappedHours = Math.min(weeklyHours, 40)

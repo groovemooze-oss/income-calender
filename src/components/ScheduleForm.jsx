@@ -26,6 +26,7 @@ export default function ScheduleForm({
   const [newCategoryWage, setNewCategoryWage] = useState('')
   const [newCategoryTax33, setNewCategoryTax33] = useState(false)
   const [newCategoryTaxInsurance, setNewCategoryTaxInsurance] = useState(false)
+  const [newCategoryIncludesHolidayPay, setNewCategoryIncludesHolidayPay] = useState(false)
 
   if (!date) {
     return (
@@ -104,13 +105,20 @@ export default function ScheduleForm({
   }
 
   function handleAddCategory() {
-    const created = onAddCategory(newCategoryName, newCategoryWage, newCategoryTax33, newCategoryTaxInsurance)
+    const created = onAddCategory(
+      newCategoryName,
+      newCategoryWage,
+      newCategoryTax33,
+      newCategoryTaxInsurance,
+      newCategoryIncludesHolidayPay,
+    )
     if (created) {
       setForm((prev) => ({ ...prev, categoryId: created.id, noBreak: false }))
       setNewCategoryName('')
       setNewCategoryWage('')
       setNewCategoryTax33(false)
       setNewCategoryTaxInsurance(false)
+      setNewCategoryIncludesHolidayPay(false)
       setShowNewCategory(false)
     }
   }
@@ -120,6 +128,7 @@ export default function ScheduleForm({
     setNewCategoryWage('')
     setNewCategoryTax33(false)
     setNewCategoryTaxInsurance(false)
+    setNewCategoryIncludesHolidayPay(false)
     setShowNewCategory(false)
   }
 
@@ -245,6 +254,15 @@ export default function ScheduleForm({
                 사대보험
               </label>
             </div>
+            <label className="flex items-center gap-1.5 text-xs text-slate-500">
+              <input
+                type="checkbox"
+                checked={newCategoryIncludesHolidayPay}
+                onChange={(e) => setNewCategoryIncludesHolidayPay(e.target.checked)}
+                className="accent-indigo-600"
+              />
+              시급에 주휴수당 포함됨 (별도 계산 안 함)
+            </label>
             <div className="flex gap-2">
               <button
                 type="button"

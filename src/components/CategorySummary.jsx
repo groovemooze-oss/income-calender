@@ -14,6 +14,7 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
   const [draftWage, setDraftWage] = useState('')
   const [draftTax33, setDraftTax33] = useState(false)
   const [draftTaxInsurance, setDraftTaxInsurance] = useState(false)
+  const [draftIncludesHolidayPay, setDraftIncludesHolidayPay] = useState(false)
 
   if (categories.length === 0) {
     return null
@@ -27,10 +28,17 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
     setDraftWage(String(category.hourlyWage || ''))
     setDraftTax33(!!category.tax3_3)
     setDraftTaxInsurance(!!category.taxInsurance)
+    setDraftIncludesHolidayPay(!!category.includesHolidayPay)
   }
 
   function commitEditing(id) {
-    onUpdateCategory(id, { name: draftName, hourlyWage: draftWage, tax3_3: draftTax33, taxInsurance: draftTaxInsurance })
+    onUpdateCategory(id, {
+      name: draftName,
+      hourlyWage: draftWage,
+      tax3_3: draftTax33,
+      taxInsurance: draftTaxInsurance,
+      includesHolidayPay: draftIncludesHolidayPay,
+    })
     setEditingId(null)
   }
 
@@ -113,6 +121,9 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
                           ({[category.tax3_3 && '3.3%', category.taxInsurance && '사대보험'].filter(Boolean).join(', ')})
                         </span>
                       )}
+                      {category.includesHolidayPay && (
+                        <span className="shrink-0 text-xs text-slate-400">주휴수당 포함 시급</span>
+                      )}
                     </button>
                   )}
                 </div>
@@ -145,6 +156,17 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
                     사대보험
                   </label>
                 </div>
+              )}
+              {isEditing && (
+                <label className="flex items-center gap-1.5 pl-4 text-xs text-slate-500">
+                  <input
+                    type="checkbox"
+                    checked={draftIncludesHolidayPay}
+                    onChange={(e) => setDraftIncludesHolidayPay(e.target.checked)}
+                    className="accent-indigo-600"
+                  />
+                  시급에 주휴수당 포함됨 (별도 계산 안 함)
+                </label>
               )}
             </div>
 
@@ -190,36 +212,46 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
 
             {category.hourlyWage > 0 && weeks.length > 0 && (
               <div className="mt-3 border-t border-slate-100 pt-2">
-                <div className="mb-1 flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-500">주휴수당 (주 {HOLIDAY_PAY_MIN_HOURS}시간 이상 시)</span>
-                  {totalAllowance > 0 && (
-                    <span className="text-xs font-semibold text-emerald-600">합계 {formatWon(totalAllowance)}</span>
-                  )}
-                </div>
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="text-slate-400">
-                      <th className="pb-1 font-normal">주</th>
-                      <th className="pb-1 font-normal">근무시간</th>
-                      <th className="pb-1 font-normal">주휴수당</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {weeks.map((week) => (
-                      <tr key={week.weekKey} className="border-t border-slate-50">
-                        <td className="py-1 text-slate-600">{weekRangeLabel(week.weekKey)}</td>
-                        <td className="py-1 text-slate-600">{formatHours(week.minutes)}h</td>
-                        <td className={`py-1 font-medium ${week.allowance > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                          {week.allowance > 0 ? formatWon(week.allowance) : '조건 미충족'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <p className="mt-1 text-[10px] leading-tight text-slate-400">
-                  해당 주에 등록된 근무는 모두 개근한 것으로 가정하고 계산합니다. 실제 지급 여부는 결근 여부와 다음 주 근로
-                  예정 여부에 따라 달라질 수 있습니다.
-                </p>
+                {category.includesHolidayPay ? (
+                  <p className="text-xs text-slate-400">
+                    이 근무처는 시급에 주휴수당이 포함되어 있어 별도로 계산하지 않습니다.
+                  </p>
+                ) : (
+                  <>
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-xs font-medium text-slate-500">
+                        주휴수당 (주 {HOLIDAY_PAY_MIN_HOURS}시간 이상 시)
+                      </span>
+                      {totalAllowance > 0 && (
+                        <span className="text-xs font-semibold text-emerald-600">합계 {formatWon(totalAllowance)}</span>
+                      )}
+                    </div>
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="text-slate-400">
+                          <th className="pb-1 font-normal">주</th>
+                          <th className="pb-1 font-normal">근무시간</th>
+                          <th className="pb-1 font-normal">주휴수당</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {weeks.map((week) => (
+                          <tr key={week.weekKey} className="border-t border-slate-50">
+                            <td className="py-1 text-slate-600">{weekRangeLabel(week.weekKey)}</td>
+                            <td className="py-1 text-slate-600">{formatHours(week.minutes)}h</td>
+                            <td className={`py-1 font-medium ${week.allowance > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                              {week.allowance > 0 ? formatWon(week.allowance) : '조건 미충족'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <p className="mt-1 text-[10px] leading-tight text-slate-400">
+                      해당 주에 등록된 근무는 모두 개근한 것으로 가정하고 계산합니다. 실제 지급 여부는 결근 여부와 다음 주
+                      근로 예정 여부에 따라 달라질 수 있습니다.
+                    </p>
+                  </>
+                )}
               </div>
             )}
           </div>
