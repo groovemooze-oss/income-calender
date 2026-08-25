@@ -28,3 +28,21 @@ export function calculateNetPay(minutes, category) {
 export function formatWon(amount) {
   return Math.round(amount).toLocaleString('ko-KR') + '원'
 }
+
+// 주휴수당 (weekly paid-holiday allowance, 근로기준법 제55조): a week with
+// 15+ scheduled hours qualifies. Pay is 8 hours' wage at 40+ weekly hours,
+// otherwise (weeklyHours / 40) * 8 hours' wage — overtime past 40h/week
+// doesn't grow it further. We can only see actual logged shifts here, not
+// a formal work schedule, so a week is treated as fully attended (개근)
+// whenever it has any entries; the "employment continues into next week"
+// condition isn't checked at all.
+export const HOLIDAY_PAY_MIN_HOURS = 15
+
+export function calculateHolidayPay(weeklyMinutes, category) {
+  const weeklyHours = weeklyMinutes / 60
+  if (weeklyHours < HOLIDAY_PAY_MIN_HOURS) return 0
+  const cappedHours = Math.min(weeklyHours, 40)
+  const allowanceHours = (cappedHours / 40) * 8
+  const gross = allowanceHours * (Number(category?.hourlyWage) || 0)
+  return gross * (1 - taxRateFor(category))
+}

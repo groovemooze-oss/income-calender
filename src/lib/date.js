@@ -39,3 +39,21 @@ export function workedMinutes(startTime, endTime, breakMinutes = 0) {
 export function formatHours(minutes) {
   return (minutes / 60).toFixed(1)
 }
+
+// The Sunday-start date key of the week containing `dateStr` — used to
+// group shifts into weeks for weekly-holiday-pay calculations.
+export function weekKeyFor(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  date.setDate(date.getDate() - date.getDay())
+  return toDateKey(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+// "8/3 ~ 8/9" label for a week identified by its Sunday weekKey.
+export function weekRangeLabel(weekKey) {
+  const [y, m, d] = weekKey.split('-').map(Number)
+  const start = new Date(y, m - 1, d)
+  const end = new Date(y, m - 1, d + 6)
+  const fmt = (date) => `${date.getMonth() + 1}/${date.getDate()}`
+  return `${fmt(start)} ~ ${fmt(end)}`
+}

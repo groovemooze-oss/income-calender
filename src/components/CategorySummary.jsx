@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { workedMinutes, formatHours } from '../lib/date'
+import { workedMinutes, formatHours, weekKeyFor, weekRangeLabel } from '../lib/date'
 import { colorFor } from '../lib/colors'
-import { calculateNetPay, formatWon } from '../lib/pay'
+import { calculateNetPay, calculateHolidayPay, HOLIDAY_PAY_MIN_HOURS, formatWon } from '../lib/pay'
 import { allEntries } from '../lib/useSchedules'
 
 // For each category, records are listed in date order and, starting from
@@ -51,6 +51,17 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
         let cumulativeMinutes = 0
         const color = colorFor(category.color)
         const isEditing = editingId === category.id
+
+        const weekMinutes = new Map()
+        records.forEach((record) => {
+          const key = weekKeyFor(record.date)
+          const minutes = workedMinutes(record.startTime, record.endTime, record.breakMinutes)
+          weekMinutes.set(key, (weekMinutes.get(key) || 0) + minutes)
+        })
+        const weeks = Array.from(weekMinutes.entries())
+          .map(([weekKey, minutes]) => ({ weekKey, minutes, allowance: calculateHolidayPay(minutes, category) }))
+          .sort((a, b) => a.weekKey.localeCompare(b.weekKey))
+        const totalAllowance = weeks.reduce((sum, w) => sum + w.allowance, 0)
 
         return (
           <div key={category.id} className="rounded-lg border border-slate-100 p-3">
@@ -175,6 +186,41 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
                   })}
                 </tbody>
               </table>
+            )}
+
+            {category.hourlyWage > 0 && weeks.length > 0 && (
+              <div className="mt-3 border-t border-slate-100 pt-2">
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-500">주휴수당 (주 {HOLIDAY_PAY_MIN_HOURS}시간 이상 시)</span>
+                  {totalAllowance > 0 && (
+                    <span className="text-xs font-semibold text-emerald-600">합계 {formatWon(totalAllowance)}</span>
+                  )}
+                </div>
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="text-slate-400">
+                      <th className="pb-1 font-normal">주</th>
+                      <th className="pb-1 font-normal">근무시간</th>
+                      <th className="pb-1 font-normal">주휴수당</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {weeks.map((week) => (
+                      <tr key={week.weekKey} className="border-t border-slate-50">
+                        <td className="py-1 text-slate-600">{weekRangeLabel(week.weekKey)}</td>
+                        <td className="py-1 text-slate-600">{formatHours(week.minutes)}h</td>
+                        <td className={`py-1 font-medium ${week.allowance > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                          {week.allowance > 0 ? formatWon(week.allowance) : '조건 미충족'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="mt-1 text-[10px] leading-tight text-slate-400">
+                  해당 주에 등록된 근무는 모두 개근한 것으로 가정하고 계산합니다. 실제 지급 여부는 결근 여부와 다음 주 근로
+                  예정 여부에 따라 달라질 수 있습니다.
+                </p>
+              </div>
             )}
           </div>
         )
