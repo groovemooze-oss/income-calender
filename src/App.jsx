@@ -5,7 +5,7 @@ import CategorySummary from './components/CategorySummary'
 import { useSchedules, allEntries } from './lib/useSchedules'
 import { useCategories } from './lib/useCategories'
 import { workedMinutes, formatHours } from './lib/date'
-import { calculatePay, formatWon } from './lib/pay'
+import { calculateNetPay, formatWon } from './lib/pay'
 
 export default function App() {
   const today = new Date()
@@ -31,7 +31,7 @@ export default function App() {
       monthlySchedules.reduce((sum, s) => {
         const category = categoriesById[s.categoryId]
         if (!category) return sum
-        return sum + calculatePay(workedMinutes(s.startTime, s.endTime, s.breakMinutes), category.hourlyWage)
+        return sum + calculateNetPay(workedMinutes(s.startTime, s.endTime, s.breakMinutes), category)
       }, 0),
     [monthlySchedules, categoriesById],
   )

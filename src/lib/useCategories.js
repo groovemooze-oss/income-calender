@@ -16,9 +16,12 @@ function makeId() {
   return `cat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
-// Categories represent workplaces: { id, name, color, hourlyWage, noBreak }
+// Categories represent workplaces:
+// { id, name, color, hourlyWage, noBreak, tax3_3, taxInsurance }
 // `noBreak` is the workplace's remembered "no break time" preference, used
 // to default the break-time checkbox for new entries at that workplace.
+// `tax3_3`/`taxInsurance` control which deductions apply to that
+// workplace's pay (see lib/pay.js).
 export function useCategories() {
   const [categories, setCategories] = useState(loadCategories)
 
@@ -26,7 +29,7 @@ export function useCategories() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(categories))
   }, [categories])
 
-  function addCategory(name, hourlyWage) {
+  function addCategory(name, hourlyWage, tax3_3, taxInsurance) {
     const trimmed = name.trim()
     if (!trimmed) return null
     const category = {
@@ -35,6 +38,8 @@ export function useCategories() {
       color: nextColorKey(categories.length),
       hourlyWage: Number(hourlyWage) || 0,
       noBreak: false,
+      tax3_3: !!tax3_3,
+      taxInsurance: !!taxInsurance,
     }
     setCategories((prev) => [...prev, category])
     return category
@@ -44,11 +49,15 @@ export function useCategories() {
     setCategories((prev) => prev.filter((c) => c.id !== id))
   }
 
-  function updateCategory(id, { name, hourlyWage }) {
+  function updateCategory(id, { name, hourlyWage, tax3_3, taxInsurance }) {
     const trimmed = name.trim()
     if (!trimmed) return
     setCategories((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, name: trimmed, hourlyWage: Number(hourlyWage) || 0 } : c)),
+      prev.map((c) =>
+        c.id === id
+          ? { ...c, name: trimmed, hourlyWage: Number(hourlyWage) || 0, tax3_3: !!tax3_3, taxInsurance: !!taxInsurance }
+          : c,
+      ),
     )
   }
 

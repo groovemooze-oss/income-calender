@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { workedMinutes, formatHours } from '../lib/date'
 import { findLatestByCategory } from '../lib/useSchedules'
-import { calculatePay, formatWon } from '../lib/pay'
+import { calculatePay, calculateNetPay, formatWon } from '../lib/pay'
 import { colorFor } from '../lib/colors'
 
 const EMPTY_FORM = { startTime: '09:00', endTime: '18:00', breakMinutes: 60, categoryId: '', noBreak: false }
@@ -23,6 +23,8 @@ export default function ScheduleForm({
   const [form, setForm] = useState(EMPTY_FORM)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [newCategoryWage, setNewCategoryWage] = useState('')
+  const [newCategoryTax33, setNewCategoryTax33] = useState(false)
+  const [newCategoryTaxInsurance, setNewCategoryTaxInsurance] = useState(false)
 
   if (!date) {
     return (
@@ -101,11 +103,13 @@ export default function ScheduleForm({
   }
 
   function handleAddCategory() {
-    const created = onAddCategory(newCategoryName, newCategoryWage)
+    const created = onAddCategory(newCategoryName, newCategoryWage, newCategoryTax33, newCategoryTaxInsurance)
     if (created) {
       setForm((prev) => ({ ...prev, categoryId: created.id, noBreak: false }))
       setNewCategoryName('')
       setNewCategoryWage('')
+      setNewCategoryTax33(false)
+      setNewCategoryTaxInsurance(false)
     }
   }
 
@@ -205,6 +209,26 @@ export default function ScheduleForm({
             + 추가
           </button>
         </div>
+        <div className="flex gap-3 text-xs text-slate-500">
+          <label className="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              checked={newCategoryTax33}
+              onChange={(e) => setNewCategoryTax33(e.target.checked)}
+              className="accent-indigo-600"
+            />
+            3.3% 원천징수
+          </label>
+          <label className="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              checked={newCategoryTaxInsurance}
+              onChange={(e) => setNewCategoryTaxInsurance(e.target.checked)}
+              className="accent-indigo-600"
+            />
+            사대보험
+          </label>
+        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <label className="flex flex-col gap-1 text-sm text-slate-600">
@@ -256,7 +280,10 @@ export default function ScheduleForm({
           {selectedCategory && selectedCategory.hourlyWage > 0 && (
             <>
               {' · '}
-              <span className="font-semibold text-indigo-600">{formatWon(calculatePay(minutes, selectedCategory.hourlyWage))}</span>
+              <span className="font-semibold text-indigo-600">{formatWon(calculateNetPay(minutes, selectedCategory))}</span>
+              {(selectedCategory.tax3_3 || selectedCategory.taxInsurance) && (
+                <span className="text-xs text-slate-400"> (세전 {formatWon(calculatePay(minutes, selectedCategory.hourlyWage))})</span>
+              )}
             </>
           )}
         </div>
