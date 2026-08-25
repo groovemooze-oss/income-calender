@@ -11,7 +11,9 @@ export default function TimeSelect({ name, value, onChange, className }) {
     onChange({ target: { name, value: `${nextHH}:${nextMM}` } })
   }
 
-  const selectClassName = className ?? 'flex-1 rounded-lg border border-slate-200 px-2 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none'
+  const selectClassName =
+    className ??
+    'flex-1 rounded-lg border border-white/60 bg-white/50 px-2 py-2 text-slate-800 backdrop-blur-sm focus:border-indigo-500 focus:bg-white/70 focus:outline-none'
 
   return (
     <div className="flex items-center gap-1">

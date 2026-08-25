@@ -56,11 +56,11 @@ export default function RepeatScheduleModal({ categories, onAdd, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm" onClick={onClose}>
       <form
         onSubmit={handleSubmit}
         onClick={(e) => e.stopPropagation()}
-        className="flex w-full max-w-md flex-col gap-4 rounded-xl bg-white p-5 shadow-xl"
+        className="flex w-full max-w-md flex-col gap-4 rounded-2xl border border-white/60 bg-white/60 p-5 shadow-2xl backdrop-blur-2xl"
       >
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold text-slate-800">반복 일정 등록</h3>
@@ -75,7 +75,7 @@ export default function RepeatScheduleModal({ categories, onAdd, onClose }) {
             name="categoryId"
             value={form.categoryId}
             onChange={handleChange}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none"
+            className="rounded-lg border border-white/60 bg-white/50 px-3 py-2 text-slate-800 backdrop-blur-sm focus:border-indigo-500 focus:bg-white/70 focus:outline-none"
           >
             <option value="">미지정</option>
             {categories.map((c) => (
@@ -95,10 +95,10 @@ export default function RepeatScheduleModal({ categories, onAdd, onClose }) {
                 key={label}
                 type="button"
                 onClick={() => toggleWeekday(day)}
-                className={`h-8 w-8 rounded-full text-sm font-medium ${
+                className={`h-8 w-8 rounded-full text-sm font-medium backdrop-blur-sm ${
                   form.weekdays.includes(day)
                     ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                    : 'bg-white/40 text-slate-500 hover:bg-white/70'
                 }`}
               >
                 {label}
@@ -116,7 +116,7 @@ export default function RepeatScheduleModal({ categories, onAdd, onClose }) {
               value={form.startDate}
               onChange={handleChange}
               required
-              className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none"
+              className="rounded-lg border border-white/60 bg-white/50 px-3 py-2 text-slate-800 backdrop-blur-sm focus:border-indigo-500 focus:bg-white/70 focus:outline-none"
             />
           </label>
           <label className="flex flex-col gap-1 text-sm text-slate-600">
@@ -128,7 +128,7 @@ export default function RepeatScheduleModal({ categories, onAdd, onClose }) {
               min={form.startDate}
               onChange={handleChange}
               required
-              className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none"
+              className="rounded-lg border border-white/60 bg-white/50 px-3 py-2 text-slate-800 backdrop-blur-sm focus:border-indigo-500 focus:bg-white/70 focus:outline-none"
             />
           </label>
         </div>
@@ -160,11 +160,11 @@ export default function RepeatScheduleModal({ categories, onAdd, onClose }) {
             value={form.breakMinutes}
             onChange={handleChange}
             disabled={form.noBreak}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-400"
+            className="rounded-lg border border-white/60 bg-white/50 px-3 py-2 text-slate-800 backdrop-blur-sm focus:border-indigo-500 focus:bg-white/70 focus:outline-none disabled:bg-white/20 disabled:text-slate-400"
           />
         </div>
 
-        <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+        <div className="rounded-lg bg-white/30 px-3 py-2 text-sm text-slate-600 backdrop-blur-sm">
           {form.weekdays.length === 0 ? (
             <span className="text-red-500">반복 요일을 하나 이상 선택하세요.</span>
           ) : !rangeValid ? (

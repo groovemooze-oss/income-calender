@@ -8,7 +8,7 @@ export default function Calendar({ year, month, schedules, categoriesById, selec
   const today = todayKey()
 
   return (
-    <div className="rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+    <div className="rounded-2xl bg-white/40 shadow-xl shadow-indigo-200/40 ring-1 ring-white/60 backdrop-blur-xl">
       <div className="flex items-center justify-between px-4 py-3">
         <h2 className="text-lg font-semibold text-slate-800">
           {year}년 {month + 1}월
@@ -17,7 +17,7 @@ export default function Calendar({ year, month, schedules, categoriesById, selec
           <button
             type="button"
             onClick={onPrevMonth}
-            className="rounded-lg px-2.5 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+            className="rounded-lg px-2.5 py-1.5 text-sm text-slate-600 hover:bg-white/60"
             aria-label="이전 달"
           >
             ◀
@@ -25,14 +25,14 @@ export default function Calendar({ year, month, schedules, categoriesById, selec
           <button
             type="button"
             onClick={onToday}
-            className="rounded-lg px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+            className="rounded-lg px-3 py-1.5 text-sm text-slate-600 hover:bg-white/60"
           >
             오늘
           </button>
           <button
             type="button"
             onClick={onNextMonth}
-            className="rounded-lg px-2.5 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+            className="rounded-lg px-2.5 py-1.5 text-sm text-slate-600 hover:bg-white/60"
             aria-label="다음 달"
           >
             ▶
@@ -40,7 +40,7 @@ export default function Calendar({ year, month, schedules, categoriesById, selec
         </div>
       </div>
 
-      <div className="grid grid-cols-7 border-t border-slate-100 text-center text-xs font-medium text-slate-400">
+      <div className="grid grid-cols-7 border-t border-white/40 text-center text-xs font-medium text-slate-400">
         {WEEKDAYS.map((w, i) => (
           <div key={w} className={`py-2 ${i === 0 ? 'text-red-400' : ''} ${i === 6 ? 'text-blue-400' : ''}`}>
             {w}
@@ -48,7 +48,7 @@ export default function Calendar({ year, month, schedules, categoriesById, selec
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-px bg-slate-100">
+      <div className="grid grid-cols-7 gap-px bg-white/30">
         {days.map((date) => {
           const key = toDateKey(date.getFullYear(), date.getMonth(), date.getDate())
           const inMonth = isSameMonth(date, year, month)
@@ -62,9 +62,9 @@ export default function Calendar({ year, month, schedules, categoriesById, selec
               key={key}
               type="button"
               onClick={() => onSelectDate(key)}
-              className={`flex min-h-20 flex-col items-start gap-1 bg-white p-1.5 text-left transition sm:min-h-24 sm:p-2 ${
-                inMonth ? '' : 'bg-slate-50 text-slate-300'
-              } ${isSelected ? 'ring-2 ring-inset ring-indigo-500' : 'hover:bg-slate-50'}`}
+              className={`flex min-h-20 flex-col items-start gap-1 bg-white/20 p-1.5 text-left backdrop-blur-sm transition sm:min-h-24 sm:p-2 ${
+                inMonth ? '' : 'bg-white/5 text-slate-300'
+              } ${isSelected ? 'bg-white/50 ring-2 ring-inset ring-indigo-500' : 'hover:bg-white/40'}`}
             >
               <span
                 className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${

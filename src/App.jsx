@@ -61,15 +61,22 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="relative min-h-screen bg-gradient-to-br from-indigo-100 via-sky-50 to-purple-100">
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-indigo-400/50 blur-3xl" />
+        <div className="absolute -right-10 top-1/4 h-[28rem] w-[28rem] rounded-full bg-purple-400/45 blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 h-96 w-96 rounded-full bg-sky-400/45 blur-3xl" />
+        <div className="absolute right-1/4 bottom-10 h-72 w-72 rounded-full bg-pink-300/40 blur-3xl" />
+      </div>
+
+      <header className="sticky top-0 z-10 border-b border-white/40 bg-white/30 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
           <h1 className="text-xl font-bold text-slate-800">알바 근무 스케줄러</h1>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setShowRepeatModal(true)}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+              className="rounded-lg border border-white/60 bg-white/40 px-3 py-1.5 text-sm text-slate-600 backdrop-blur-sm hover:bg-white/60"
             >
               반복 일정 등록
             </button>
@@ -86,7 +93,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-5xl gap-4 px-4 py-6 md:grid-cols-[2fr_1fr]">
+      <main className="relative mx-auto grid max-w-5xl gap-4 px-4 py-6 md:grid-cols-[2fr_1fr]">
         <div className="flex flex-col gap-4">
           <Calendar
             year={year}

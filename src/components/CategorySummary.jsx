@@ -48,7 +48,7 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl bg-white p-5 ring-1 ring-slate-200">
+    <div className="flex flex-col gap-3 rounded-2xl bg-white/40 p-5 shadow-xl shadow-indigo-200/40 ring-1 ring-white/60 backdrop-blur-xl">
       <h3 className="text-base font-semibold text-slate-800">근무처별 누적 근무시간</h3>
 
       {categories.map((category) => {
@@ -72,7 +72,7 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
         const totalAllowance = weeks.reduce((sum, w) => sum + w.allowance, 0)
 
         return (
-          <div key={category.id} className="rounded-lg border border-slate-100 p-3">
+          <div key={category.id} className="rounded-lg border border-white/50 bg-white/20 p-3 backdrop-blur-sm">
             <div className="mb-2 flex flex-col gap-1.5">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -85,7 +85,7 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
                         autoFocus
                         onChange={(e) => setDraftName(e.target.value)}
                         onKeyDown={(e) => handleKeyDown(e, category.id)}
-                        className="min-w-0 flex-1 rounded border border-indigo-300 px-1.5 py-0.5 text-sm text-slate-700 focus:outline-none"
+                        className="min-w-0 flex-1 rounded border border-indigo-300 bg-white/60 px-1.5 py-0.5 text-sm text-slate-700 backdrop-blur-sm focus:outline-none"
                       />
                       <input
                         type="number"
@@ -95,7 +95,7 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
                         onChange={(e) => setDraftWage(e.target.value)}
                         onKeyDown={(e) => handleKeyDown(e, category.id)}
                         placeholder="시급"
-                        className="w-16 shrink-0 rounded border border-indigo-300 px-1.5 py-0.5 text-sm text-slate-700 focus:outline-none"
+                        className="w-16 shrink-0 rounded border border-indigo-300 bg-white/60 px-1.5 py-0.5 text-sm text-slate-700 backdrop-blur-sm focus:outline-none"
                       />
                       <button
                         type="button"
@@ -211,7 +211,7 @@ export default function CategorySummary({ categories, schedules, onRemoveCategor
             )}
 
             {category.hourlyWage > 0 && weeks.length > 0 && (
-              <div className="mt-3 border-t border-slate-100 pt-2">
+              <div className="mt-3 border-t border-white/50 pt-2">
                 {category.includesHolidayPay ? (
                   <p className="text-xs text-slate-400">
                     이 근무처는 시급에 주휴수당이 포함되어 있어 별도로 계산하지 않습니다.

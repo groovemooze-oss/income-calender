@@ -31,7 +31,7 @@ export default function ScheduleForm({
 
   if (!date) {
     return (
-      <div className="flex h-full items-center justify-center rounded-xl bg-white p-6 text-center text-sm text-slate-400 ring-1 ring-slate-200">
+      <div className="flex h-full items-center justify-center rounded-2xl bg-white/40 p-6 text-center text-sm text-slate-400 shadow-xl shadow-indigo-200/40 ring-1 ring-white/60 backdrop-blur-xl">
         캘린더에서 날짜를 선택해 근무시간을 등록하세요.
       </div>
     )
@@ -134,7 +134,7 @@ export default function ScheduleForm({
   }
 
   return (
-    <div className="flex h-full flex-col gap-4 rounded-xl bg-white p-5 ring-1 ring-slate-200">
+    <div className="flex h-full flex-col gap-4 rounded-2xl bg-white/40 p-5 shadow-xl shadow-indigo-200/40 ring-1 ring-white/60 backdrop-blur-xl">
       <div>
         <h3 className="text-base font-semibold text-slate-800">{date}</h3>
         <p className="text-xs text-slate-400">하루에 여러 근무처의 기록을 추가할 수 있습니다.</p>
@@ -148,8 +148,8 @@ export default function ScheduleForm({
             return (
               <li
                 key={entry.id}
-                className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs ${
-                  isActive ? 'border-indigo-300 bg-indigo-50' : 'border-slate-100'
+                className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs backdrop-blur-sm ${
+                  isActive ? 'border-indigo-300 bg-indigo-50/60' : 'border-white/50 bg-white/20'
                 }`}
               >
                 {category && <span className={`h-2 w-2 shrink-0 rounded-full ${colorFor(category.color).dot}`} />}
@@ -202,7 +202,7 @@ export default function ScheduleForm({
             name="categoryId"
             value={form.categoryId}
             onChange={handleCategoryChange}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none"
+            className="rounded-lg border border-white/60 bg-white/50 px-3 py-2 text-slate-800 backdrop-blur-sm focus:border-indigo-500 focus:bg-white/70 focus:outline-none"
           >
             <option value="">미지정</option>
             {categories.map((c) => (
@@ -215,7 +215,7 @@ export default function ScheduleForm({
         </div>
 
         {showNewCategory && (
-          <div className="flex flex-col gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3">
+          <div className="flex flex-col gap-2 rounded-lg border border-dashed border-slate-300 bg-white/30 p-3 backdrop-blur-sm">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -223,7 +223,7 @@ export default function ScheduleForm({
                 onChange={(e) => setNewCategoryName(e.target.value)}
                 placeholder="새 근무처 이름"
                 autoFocus
-                className="flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+                className="flex-1 rounded-lg border border-white/60 bg-white/50 px-3 py-1.5 text-sm text-slate-800 backdrop-blur-sm focus:border-indigo-500 focus:bg-white/70 focus:outline-none"
               />
               <input
                 type="number"
@@ -232,7 +232,7 @@ export default function ScheduleForm({
                 value={newCategoryWage}
                 onChange={(e) => setNewCategoryWage(e.target.value)}
                 placeholder="시급"
-                className="w-20 rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+                className="w-20 rounded-lg border border-white/60 bg-white/50 px-2 py-1.5 text-sm text-slate-800 backdrop-blur-sm focus:border-indigo-500 focus:bg-white/70 focus:outline-none"
               />
             </div>
             <div className="flex gap-3 text-xs text-slate-500">
@@ -275,7 +275,7 @@ export default function ScheduleForm({
               <button
                 type="button"
                 onClick={handleCancelNewCategory}
-                className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-white"
+                className="rounded-lg border border-white/60 bg-white/40 px-3 py-1.5 text-sm text-slate-600 backdrop-blur-sm hover:bg-white/70"
               >
                 취소
               </button>
@@ -310,11 +310,11 @@ export default function ScheduleForm({
             value={form.breakMinutes}
             onChange={handleChange}
             disabled={form.noBreak}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-400"
+            className="rounded-lg border border-white/60 bg-white/50 px-3 py-2 text-slate-800 backdrop-blur-sm focus:border-indigo-500 focus:bg-white/70 focus:outline-none disabled:bg-white/20 disabled:text-slate-400"
           />
         </div>
 
-        <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+        <div className="rounded-lg bg-white/30 px-3 py-2 text-sm text-slate-600 backdrop-blur-sm">
           실 근무시간: <span className="font-semibold text-indigo-600">{formatHours(minutes)}시간</span>
           {selectedCategory && selectedCategory.hourlyWage > 0 && (
             <>
