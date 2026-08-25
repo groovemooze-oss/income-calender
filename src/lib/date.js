@@ -57,3 +57,20 @@ export function weekRangeLabel(weekKey) {
   const fmt = (date) => `${date.getMonth() + 1}/${date.getDate()}`
   return `${fmt(start)} ~ ${fmt(end)}`
 }
+
+// All date keys in [startDateStr, endDateStr] whose day-of-week (0=Sun)
+// is in `weekdays` — used to expand a recurring schedule into entries.
+export function datesInRange(startDateStr, endDateStr, weekdays) {
+  const [sy, sm, sd] = startDateStr.split('-').map(Number)
+  const [ey, em, ed] = endDateStr.split('-').map(Number)
+  const cursor = new Date(sy, sm - 1, sd)
+  const end = new Date(ey, em - 1, ed)
+  const dates = []
+  while (cursor <= end) {
+    if (weekdays.includes(cursor.getDay())) {
+      dates.push(toDateKey(cursor.getFullYear(), cursor.getMonth(), cursor.getDate()))
+    }
+    cursor.setDate(cursor.getDate() + 1)
+  }
+  return dates
+}

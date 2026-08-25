@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import Calendar from './components/Calendar'
 import ScheduleForm from './components/ScheduleForm'
 import CategorySummary from './components/CategorySummary'
+import RepeatScheduleModal from './components/RepeatScheduleModal'
 import { useSchedules, allEntries } from './lib/useSchedules'
 import { useCategories } from './lib/useCategories'
 import { workedMinutes, formatHours } from './lib/date'
@@ -12,6 +13,7 @@ export default function App() {
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
   const [selectedDate, setSelectedDate] = useState(null)
+  const [showRepeatModal, setShowRepeatModal] = useState(false)
   const { schedules, addSchedule, updateSchedule, deleteSchedule, clearCategory } = useSchedules()
   const { categories, addCategory, removeCategory, updateCategory, setCategoryNoBreak } = useCategories()
 
@@ -63,14 +65,23 @@ export default function App() {
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
           <h1 className="text-xl font-bold text-slate-800">알바 근무 스케줄러</h1>
-          <div className="text-sm text-slate-500">
-            이번 달 근무시간 <span className="font-semibold text-indigo-600">{formatHours(monthlyMinutes)}시간</span>
-            {monthlyPay > 0 && (
-              <>
-                {' · 예상 급여 '}
-                <span className="font-semibold text-indigo-600">{formatWon(monthlyPay)}</span>
-              </>
-            )}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowRepeatModal(true)}
+              className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+            >
+              반복 일정 등록
+            </button>
+            <div className="text-sm text-slate-500">
+              이번 달 근무시간 <span className="font-semibold text-indigo-600">{formatHours(monthlyMinutes)}시간</span>
+              {monthlyPay > 0 && (
+                <>
+                  {' · 예상 급여 '}
+                  <span className="font-semibold text-indigo-600">{formatWon(monthlyPay)}</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -108,6 +119,10 @@ export default function App() {
           onSetCategoryNoBreak={setCategoryNoBreak}
         />
       </main>
+
+      {showRepeatModal && (
+        <RepeatScheduleModal categories={categories} onAdd={addSchedule} onClose={() => setShowRepeatModal(false)} />
+      )}
     </div>
   )
 }
