@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore'
 import { nextColorKey } from './colors'
+import { db } from './firebase'
 
 const STORAGE_KEY = 'workCategories'
 
-function loadCategories() {
+function loadLocalCategories() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     return raw ? JSON.parse(raw) : []
@@ -23,12 +25,51 @@ function makeId() {
 // `tax3_3`/`taxInsurance` control which deductions apply to that
 // workplace's pay (see lib/pay.js). `includesHolidayPay` means the hourly
 // wage already has 주휴수당 folded in, so it isn't calculated separately.
-export function useCategories() {
-  const [categories, setCategories] = useState(loadCategories)
+//
+// With no `uid` (guest mode), categories live in localStorage only. Signed
+// in, they live in Firestore at users/{uid}.categories instead: the local
+// copy on first sign-in is migrated up if the cloud doc has none yet, then
+// onSnapshot keeps this device and any other signed-in device in sync.
+export function useCategories(uid) {
+  const [categories, setCategories] = useState(uid ? [] : loadLocalCategories)
 
   useEffect(() => {
+    if (!uid) {
+      setCategories(loadLocalCategories())
+      return
+    }
+    const ref = doc(db, 'users', uid)
+    let cancelled = false
+    getDoc(ref).then((snap) => {
+      if (cancelled || snap.data()?.categories !== undefined) return
+      setDoc(ref, { categories: loadLocalCategories() }, { merge: true }).catch((err) => console.error(err))
+    })
+    const unsubscribe = onSnapshot(ref, (snap) => {
+      const cloudCategories = snap.data()?.categories
+      if (cloudCategories !== undefined) setCategories(cloudCategories)
+    })
+    return () => {
+      cancelled = true
+      unsubscribe()
+    }
+  }, [uid])
+
+  useEffect(() => {
+    if (uid) return
     localStorage.setItem(STORAGE_KEY, JSON.stringify(categories))
-  }, [categories])
+  }, [categories, uid])
+
+  // Applies a local update immediately, and mirrors it to Firestore when
+  // signed in (onSnapshot above will echo the same value back). Takes an
+  // updater so calls made in the same synchronous batch each see the
+  // previous call's result rather than a stale closure value.
+  function commit(updater) {
+    setCategories((prev) => {
+      const next = updater(prev)
+      if (uid) setDoc(doc(db, 'users', uid), { categories: next }, { merge: true }).catch((err) => console.error(err))
+      return next
+    })
+  }
 
   function addCategory(name, hourlyWage, tax3_3, taxInsurance, includesHolidayPay) {
     const trimmed = name.trim()
@@ -43,18 +84,18 @@ export function useCategories() {
       taxInsurance: !!taxInsurance,
       includesHolidayPay: !!includesHolidayPay,
     }
-    setCategories((prev) => [...prev, category])
+    commit((prev) => [...prev, category])
     return category
   }
 
   function removeCategory(id) {
-    setCategories((prev) => prev.filter((c) => c.id !== id))
+    commit((prev) => prev.filter((c) => c.id !== id))
   }
 
   function updateCategory(id, { name, hourlyWage, tax3_3, taxInsurance, includesHolidayPay }) {
     const trimmed = name.trim()
     if (!trimmed) return
-    setCategories((prev) =>
+    commit((prev) =>
       prev.map((c) =>
         c.id === id
           ? {
@@ -71,7 +112,7 @@ export function useCategories() {
   }
 
   function setCategoryNoBreak(id, noBreak) {
-    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, noBreak } : c)))
+    commit((prev) => prev.map((c) => (c.id === id ? { ...c, noBreak } : c)))
   }
 
   return { categories, addCategory, removeCategory, updateCategory, setCategoryNoBreak }

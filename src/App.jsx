@@ -3,8 +3,10 @@ import Calendar from './components/Calendar'
 import ScheduleForm from './components/ScheduleForm'
 import CategorySummary from './components/CategorySummary'
 import RepeatScheduleModal from './components/RepeatScheduleModal'
+import AuthButton from './components/AuthButton'
 import { useSchedules, allEntries } from './lib/useSchedules'
 import { useCategories } from './lib/useCategories'
+import { useAuth } from './lib/useAuth'
 import { workedMinutes, formatHours } from './lib/date'
 import { calculateNetPay, formatWon } from './lib/pay'
 
@@ -14,8 +16,10 @@ export default function App() {
   const [month, setMonth] = useState(today.getMonth())
   const [selectedDate, setSelectedDate] = useState(null)
   const [showRepeatModal, setShowRepeatModal] = useState(false)
-  const { schedules, addSchedule, updateSchedule, deleteSchedule, clearCategory } = useSchedules()
-  const { categories, addCategory, removeCategory, updateCategory, setCategoryNoBreak } = useCategories()
+  const { user, authLoading, firebaseEnabled, signInWithGoogle, signOutUser } = useAuth()
+  const uid = user?.uid ?? null
+  const { schedules, addSchedule, updateSchedule, deleteSchedule, clearCategory } = useSchedules(uid)
+  const { categories, addCategory, removeCategory, updateCategory, setCategoryNoBreak } = useCategories(uid)
 
   const categoriesById = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c])), [categories])
 
@@ -89,6 +93,13 @@ export default function App() {
                 </>
               )}
             </div>
+            <AuthButton
+              firebaseEnabled={firebaseEnabled}
+              authLoading={authLoading}
+              user={user}
+              onSignIn={signInWithGoogle}
+              onSignOut={signOutUser}
+            />
           </div>
         </div>
       </header>
