@@ -3,6 +3,7 @@ import { workedMinutes, formatHours } from '../lib/date'
 import { findLatestByCategory } from '../lib/useSchedules'
 import { calculatePay, calculateNetPay, formatWon } from '../lib/pay'
 import { colorFor } from '../lib/colors'
+import TimeSelect from './TimeSelect'
 
 const EMPTY_FORM = { startTime: '09:00', endTime: '18:00', breakMinutes: 60, categoryId: '', noBreak: false }
 
@@ -285,25 +286,11 @@ export default function ScheduleForm({
         <div className="grid grid-cols-2 gap-3">
           <label className="flex flex-col gap-1 text-sm text-slate-600">
             출근 시간
-            <input
-              type="time"
-              name="startTime"
-              value={form.startTime}
-              onChange={handleChange}
-              required
-              className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none"
-            />
+            <TimeSelect name="startTime" value={form.startTime} onChange={handleChange} />
           </label>
           <label className="flex flex-col gap-1 text-sm text-slate-600">
             퇴근 시간
-            <input
-              type="time"
-              name="endTime"
-              value={form.endTime}
-              onChange={handleChange}
-              required
-              className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none"
-            />
+            <TimeSelect name="endTime" value={form.endTime} onChange={handleChange} />
           </label>
         </div>
 

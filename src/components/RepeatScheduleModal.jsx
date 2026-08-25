@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { datesInRange, todayKey } from '../lib/date'
 import { formatWon } from '../lib/pay'
+import TimeSelect from './TimeSelect'
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -135,25 +136,11 @@ export default function RepeatScheduleModal({ categories, onAdd, onClose }) {
         <div className="grid grid-cols-2 gap-3">
           <label className="flex flex-col gap-1 text-sm text-slate-600">
             출근 시간
-            <input
-              type="time"
-              name="startTime"
-              value={form.startTime}
-              onChange={handleChange}
-              required
-              className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none"
-            />
+            <TimeSelect name="startTime" value={form.startTime} onChange={handleChange} />
           </label>
           <label className="flex flex-col gap-1 text-sm text-slate-600">
             퇴근 시간
-            <input
-              type="time"
-              name="endTime"
-              value={form.endTime}
-              onChange={handleChange}
-              required
-              className="rounded-lg border border-slate-200 px-3 py-2 text-slate-800 focus:border-indigo-500 focus:outline-none"
-            />
+            <TimeSelect name="endTime" value={form.endTime} onChange={handleChange} />
           </label>
         </div>
 
