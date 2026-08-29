@@ -75,7 +75,9 @@ export default function App() {
 
       <header className="sticky top-0 z-10 border-b border-white/40 bg-white/30 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <h1 className="text-xl font-bold text-slate-800">알바 근무 스케줄러</h1>
+          <h1 className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-xl font-extrabold tracking-wide text-transparent">
+            INCOME CALENDAR
+          </h1>
           <div className="flex items-center gap-3">
             <button
               type="button"
