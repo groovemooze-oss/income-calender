@@ -39,12 +39,12 @@ async function main() {
 
   const snapshot = await db.collection('users').get()
 
-  const shiftMinutesList = []
   const startMinutesList = []
   const endMinutesList = []
   const hourlyWages = []
   const usersWithShifts = new Set()
   const usersWithWage = new Set()
+  const monthlyMinutesByUserMonth = new Map()
   const monthlyIncomeByUserMonth = new Map()
 
   snapshot.forEach((doc) => {
@@ -66,13 +66,14 @@ async function main() {
         usersWithShifts.add(uid)
 
         const minutes = workedMinutes(entry.startTime, entry.endTime, entry.breakMinutes)
-        shiftMinutesList.push(minutes)
         startMinutesList.push(timeToMinutes(entry.startTime))
         endMinutesList.push(timeToMinutes(entry.endTime))
 
+        const monthKey = `${uid}_${date.slice(0, 7)}`
+        monthlyMinutesByUserMonth.set(monthKey, (monthlyMinutesByUserMonth.get(monthKey) || 0) + minutes)
+
         const category = categoriesById[entry.categoryId]
         if (category?.hourlyWage > 0) {
-          const monthKey = `${uid}_${date.slice(0, 7)}`
           const pay = calculateNetPay(minutes, category)
           monthlyIncomeByUserMonth.set(monthKey, (monthlyIncomeByUserMonth.get(monthKey) || 0) + pay)
         }
@@ -80,6 +81,7 @@ async function main() {
     }
   })
 
+  const monthlyHours = [...monthlyMinutesByUserMonth.values()].map((minutes) => minutes / 60)
   const monthlyIncomes = [...monthlyIncomeByUserMonth.values()]
   const usersWithIncome = new Set([...monthlyIncomeByUserMonth.keys()].map((k) => k.split('_')[0]))
 
@@ -87,7 +89,7 @@ async function main() {
     computedAt: new Date().toISOString(),
     minSampleUsers: MIN_SAMPLE_USERS,
     sampleUserCount: usersWithShifts.size,
-    avgShiftMinutes: usersWithShifts.size >= MIN_SAMPLE_USERS ? Math.round(average(shiftMinutesList)) : null,
+    avgMonthlyWorkHours: usersWithShifts.size >= MIN_SAMPLE_USERS ? Math.round(average(monthlyHours) * 10) / 10 : null,
     avgStartTime: usersWithShifts.size >= MIN_SAMPLE_USERS ? minutesToClock(average(startMinutesList)) : null,
     avgEndTime: usersWithShifts.size >= MIN_SAMPLE_USERS ? minutesToClock(average(endMinutesList)) : null,
     avgHourlyWage: usersWithWage.size >= MIN_SAMPLE_USERS ? Math.round(average(hourlyWages)) : null,
