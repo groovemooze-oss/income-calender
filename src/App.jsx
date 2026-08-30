@@ -75,19 +75,19 @@ export default function App() {
       </div>
 
       <header className="sticky top-0 z-10 border-b border-white/40 bg-white/30 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <h1 className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-xl font-extrabold tracking-wide text-transparent">
+        <div className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:py-4">
+          <h1 className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-lg font-extrabold tracking-wide text-transparent sm:text-xl">
             INCOME CALENDAR
           </h1>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => setShowRepeatModal(true)}
-              className="rounded-lg border border-white/60 bg-white/40 px-3 py-1.5 text-sm text-slate-600 backdrop-blur-sm hover:bg-white/60"
+              className="whitespace-nowrap rounded-lg border border-white/60 bg-white/40 px-3 py-1.5 text-xs text-slate-600 backdrop-blur-sm hover:bg-white/60 sm:text-sm"
             >
               반복 일정 등록
             </button>
-            <div className="text-sm text-slate-500">
+            <div className="text-xs text-slate-500 sm:text-sm">
               이번 달 근무시간 <span className="font-semibold text-indigo-600">{formatHours(monthlyMinutes)}시간</span>
               {monthlyPay > 0 && (
                 <>
