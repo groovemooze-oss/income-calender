@@ -8,5 +8,18 @@ service cloud.firestore {
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
+
+    // A simple site-visit counter. Nobody can read it back through the app
+    // or the client SDK — not even the site owner — it's checked in the
+    // Firebase console only (Firestore Database -> stats -> visits). Any
+    // visitor, signed in or not, can bump `count`, but only by exactly 1
+    // per write and only that one field, so this can't be abused to write
+    // arbitrary data or an arbitrary count.
+    match /stats/visits {
+      allow read, delete: if false;
+      allow create: if request.resource.data.keys().hasOnly(['count']) && request.resource.data.count == 1;
+      allow update: if request.resource.data.keys().hasOnly(['count'])
+        && request.resource.data.count == resource.data.count + 1;
+    }
   }
 }

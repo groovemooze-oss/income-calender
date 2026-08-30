@@ -7,10 +7,12 @@ import AuthButton from './components/AuthButton'
 import { useSchedules, allEntries } from './lib/useSchedules'
 import { useCategories } from './lib/useCategories'
 import { useAuth } from './lib/useAuth'
+import { useVisitCounter } from './lib/useVisitCounter'
 import { workedMinutes, formatHours } from './lib/date'
 import { calculateNetPay, formatWon } from './lib/pay'
 
 export default function App() {
+  useVisitCounter()
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth())
