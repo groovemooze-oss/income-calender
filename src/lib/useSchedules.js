@@ -82,7 +82,8 @@ function loadLocalSchedules() {
 // onSnapshot keeps this device and any other signed-in device in sync.
 export function useSchedules(uid) {
   const [schedules, setSchedules] = useState(uid ? {} : loadLocalSchedules)
-  const [writeToFirestore] = useState(() => createSerializedWriter())
+  const [syncError, setSyncError] = useState(null)
+  const [writer] = useState(() => createSerializedWriter((err) => setSyncError(err.message || String(err))))
 
   useEffect(() => {
     if (!uid) {
@@ -93,7 +94,7 @@ export function useSchedules(uid) {
     let cancelled = false
     getDoc(ref).then((snap) => {
       if (cancelled || snap.data()?.schedules !== undefined) return
-      writeToFirestore(uid, 'schedules', loadLocalSchedules())
+      writer.write(uid, 'schedules', loadLocalSchedules())
     })
     const unsubscribe = onSnapshot(ref, (snap) => {
       const cloudSchedules = snap.data()?.schedules
@@ -103,12 +104,25 @@ export function useSchedules(uid) {
       cancelled = true
       unsubscribe()
     }
-  }, [uid, writeToFirestore])
+  }, [uid, writer])
 
   useEffect(() => {
     if (uid) return
     localStorage.setItem(STORAGE_KEY, JSON.stringify(schedules))
   }, [schedules, uid])
+
+  // Refreshing or closing the tab mid-save would otherwise cut the request
+  // off, so the edit never reaches Firestore — reopening later then shows
+  // the old data, as if the edit had silently undone itself.
+  useEffect(() => {
+    function handleBeforeUnload(e) {
+      if (!writer.isPending()) return
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [writer])
 
   // Applies a local update immediately, and mirrors it to Firestore when
   // signed in (onSnapshot above will echo the same value back). Takes an
@@ -118,7 +132,10 @@ export function useSchedules(uid) {
   function commit(updater) {
     setSchedules((prev) => {
       const next = updater(prev)
-      if (uid) writeToFirestore(uid, 'schedules', next)
+      if (uid) {
+        setSyncError(null)
+        writer.write(uid, 'schedules', next)
+      }
       return next
     })
   }
@@ -213,6 +230,7 @@ export function useSchedules(uid) {
     deleteScheduleSeries,
     deleteScheduleSeriesFrom,
     clearCategory,
+    syncError,
   }
 }
 

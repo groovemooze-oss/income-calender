@@ -33,7 +33,8 @@ function makeId() {
 // onSnapshot keeps this device and any other signed-in device in sync.
 export function useCategories(uid) {
   const [categories, setCategories] = useState(uid ? [] : loadLocalCategories)
-  const [writeToFirestore] = useState(() => createSerializedWriter())
+  const [syncError, setSyncError] = useState(null)
+  const [writer] = useState(() => createSerializedWriter((err) => setSyncError(err.message || String(err))))
 
   useEffect(() => {
     if (!uid) {
@@ -44,7 +45,7 @@ export function useCategories(uid) {
     let cancelled = false
     getDoc(ref).then((snap) => {
       if (cancelled || snap.data()?.categories !== undefined) return
-      writeToFirestore(uid, 'categories', loadLocalCategories())
+      writer.write(uid, 'categories', loadLocalCategories())
     })
     const unsubscribe = onSnapshot(ref, (snap) => {
       const cloudCategories = snap.data()?.categories
@@ -54,12 +55,25 @@ export function useCategories(uid) {
       cancelled = true
       unsubscribe()
     }
-  }, [uid, writeToFirestore])
+  }, [uid, writer])
 
   useEffect(() => {
     if (uid) return
     localStorage.setItem(STORAGE_KEY, JSON.stringify(categories))
   }, [categories, uid])
+
+  // Refreshing or closing the tab mid-save would otherwise cut the request
+  // off, so the edit never reaches Firestore — reopening later then shows
+  // the old data, as if the edit had silently undone itself.
+  useEffect(() => {
+    function handleBeforeUnload(e) {
+      if (!writer.isPending()) return
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [writer])
 
   // Applies a local update immediately, and mirrors it to Firestore when
   // signed in (onSnapshot above will echo the same value back). Takes an
@@ -68,7 +82,10 @@ export function useCategories(uid) {
   function commit(updater) {
     setCategories((prev) => {
       const next = updater(prev)
-      if (uid) writeToFirestore(uid, 'categories', next)
+      if (uid) {
+        setSyncError(null)
+        writer.write(uid, 'categories', next)
+      }
       return next
     })
   }
@@ -117,5 +134,5 @@ export function useCategories(uid) {
     commit((prev) => prev.map((c) => (c.id === id ? { ...c, noBreak } : c)))
   }
 
-  return { categories, addCategory, removeCategory, updateCategory, setCategoryNoBreak }
+  return { categories, addCategory, removeCategory, updateCategory, setCategoryNoBreak, syncError }
 }

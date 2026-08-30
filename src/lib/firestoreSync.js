@@ -10,7 +10,13 @@ import { db } from './firebase'
 // requested meanwhile are collapsed into a single follow-up carrying the
 // latest value — so the doc always ends up matching the most recent local
 // state, never an intermediate one.
-export function createSerializedWriter() {
+// `onError` is called (with the Firestore error) whenever a write fails —
+// a permission-denied rule, being offline, a bad connection, etc. Without
+// this, a failed write used to just log to the console: the local edit
+// still looked like it worked, and only a later reload — reading the
+// cloud doc that never actually got the change — would reveal it hadn't
+// saved, by which point it looks like the edit "undid itself".
+export function createSerializedWriter(onError) {
   let pending = null
   let latestValue = null
 
@@ -18,15 +24,26 @@ export function createSerializedWriter() {
     const value = latestValue
     latestValue = null
     pending = setDoc(doc(db, 'users', uid), { [field]: value }, { merge: true })
-      .catch((err) => console.error(err))
+      .catch((err) => {
+        console.error(err)
+        onError?.(err)
+      })
       .finally(() => {
         pending = null
         if (latestValue !== null) flush(uid, field)
       })
   }
 
-  return function write(uid, field, value) {
-    latestValue = value
-    if (!pending) flush(uid, field)
+  return {
+    write(uid, field, value) {
+      latestValue = value
+      if (!pending) flush(uid, field)
+    },
+    // True while a write is in flight or another is queued behind it —
+    // used to warn before the tab closes/reloads mid-save, since an
+    // in-flight request can otherwise be silently cut off by navigation.
+    isPending() {
+      return !!pending || latestValue !== null
+    },
   }
 }

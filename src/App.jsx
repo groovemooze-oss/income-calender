@@ -18,9 +18,19 @@ export default function App() {
   const [showRepeatModal, setShowRepeatModal] = useState(false)
   const { user, authLoading, firebaseEnabled, signInWithGoogle, signOutUser } = useAuth()
   const uid = user?.uid ?? null
-  const { schedules, addSchedule, updateSchedule, deleteSchedule, deleteScheduleSeries, deleteScheduleSeriesFrom, clearCategory } =
-    useSchedules(uid)
-  const { categories, addCategory, removeCategory, updateCategory, setCategoryNoBreak } = useCategories(uid)
+  const {
+    schedules,
+    addSchedule,
+    updateSchedule,
+    deleteSchedule,
+    deleteScheduleSeries,
+    deleteScheduleSeriesFrom,
+    clearCategory,
+    syncError: schedulesSyncError,
+  } = useSchedules(uid)
+  const { categories, addCategory, removeCategory, updateCategory, setCategoryNoBreak, syncError: categoriesSyncError } =
+    useCategories(uid)
+  const syncError = schedulesSyncError || categoriesSyncError
 
   const categoriesById = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c])), [categories])
 
@@ -106,6 +116,13 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {syncError && (
+        <div className="border-b border-red-200 bg-red-50/90 px-4 py-2 text-center text-sm text-red-700 backdrop-blur-sm">
+          저장에 실패했어요: {syncError} — 인터넷 연결을 확인하고 다시 시도해주세요. 이 메시지가 사라지기 전에는
+          새로고침하지 마세요.
+        </div>
+      )}
 
       <main className="relative mx-auto grid max-w-5xl gap-4 px-4 py-6 md:grid-cols-[2fr_1fr]">
         <div className="flex flex-col gap-4">
