@@ -17,10 +17,13 @@ export default function ScheduleForm({
   onAdd,
   onUpdate,
   onDelete,
+  onDeleteSeries,
+  onDeleteSeriesFrom,
   onAddCategory,
   onSetCategoryNoBreak,
 }) {
   const [editingEntryId, setEditingEntryId] = useState(null)
+  const [confirmDeleteEntry, setConfirmDeleteEntry] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [showNewCategory, setShowNewCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
@@ -100,9 +103,34 @@ export default function ScheduleForm({
     resetToNewEntry()
   }
 
+  function requestDeleteEntry(entry) {
+    if (entry.recurringId) {
+      setConfirmDeleteEntry(entry)
+    } else {
+      handleDeleteEntry(entry.id)
+    }
+  }
+
   function handleDeleteEntry(id) {
     onDelete(date, id)
     if (editingEntryId === id) resetToNewEntry()
+  }
+
+  function handleDeleteThisOnly() {
+    handleDeleteEntry(confirmDeleteEntry.id)
+    setConfirmDeleteEntry(null)
+  }
+
+  function handleDeleteFromHereOn() {
+    onDeleteSeriesFrom(confirmDeleteEntry.recurringId, date)
+    if (editingEntryId === confirmDeleteEntry.id) resetToNewEntry()
+    setConfirmDeleteEntry(null)
+  }
+
+  function handleDeleteWholeSeries() {
+    onDeleteSeries(confirmDeleteEntry.recurringId)
+    if (editingEntryId === confirmDeleteEntry.id) resetToNewEntry()
+    setConfirmDeleteEntry(null)
   }
 
   function handleAddCategory() {
@@ -145,7 +173,8 @@ export default function ScheduleForm({
           {dayEntries.map((entry) => {
             const category = categoriesById[entry.categoryId]
             const isActive = editingEntryId === entry.id
-            return (
+            const isConfirming = confirmDeleteEntry?.id === entry.id
+            return [
               <li
                 key={entry.id}
                 className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs backdrop-blur-sm ${
@@ -163,13 +192,49 @@ export default function ScheduleForm({
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDeleteEntry(entry.id)}
+                  onClick={() => requestDeleteEntry(entry)}
                   className="shrink-0 text-slate-400 hover:text-red-500"
                 >
                   삭제
                 </button>
-              </li>
-            )
+              </li>,
+              isConfirming && (
+                <li
+                  key={`${entry.id}-confirm`}
+                  className="flex flex-wrap items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50/80 px-2.5 py-1.5 text-xs backdrop-blur-sm"
+                >
+                  <span className="mr-1 text-slate-500">반복 일정 삭제 범위:</span>
+                  <button
+                    type="button"
+                    onClick={handleDeleteThisOnly}
+                    className="rounded-full border border-slate-300 bg-white px-2 py-0.5 text-slate-600 hover:bg-slate-50"
+                  >
+                    이 일정만
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteFromHereOn}
+                    className="rounded-full border border-slate-300 bg-white px-2 py-0.5 text-slate-600 hover:bg-slate-50"
+                  >
+                    이후 일정
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteWholeSeries}
+                    className="rounded-full border border-red-300 bg-white px-2 py-0.5 text-red-600 hover:bg-red-50"
+                  >
+                    전체 일정
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDeleteEntry(null)}
+                    className="ml-auto text-slate-400 hover:text-slate-600"
+                  >
+                    취소
+                  </button>
+                </li>
+              ),
+            ]
           })}
         </ul>
       )}

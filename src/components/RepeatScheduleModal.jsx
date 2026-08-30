@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { datesInRange, todayKey } from '../lib/date'
 import { formatWon } from '../lib/pay'
+import { makeRecurringId } from '../lib/useSchedules'
 import TimeSelect from './TimeSelect'
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
@@ -42,6 +43,7 @@ export default function RepeatScheduleModal({ categories, onAdd, onClose }) {
   function handleSubmit(e) {
     e.preventDefault()
     if (matchedDates.length === 0) return
+    const recurringId = makeRecurringId()
     matchedDates.forEach((date) => {
       onAdd({
         date,
@@ -50,6 +52,7 @@ export default function RepeatScheduleModal({ categories, onAdd, onClose }) {
         breakMinutes: form.noBreak ? 0 : form.breakMinutes,
         categoryId: form.categoryId,
         noBreak: form.noBreak,
+        recurringId,
       })
     })
     onClose()

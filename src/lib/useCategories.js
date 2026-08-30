@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore'
+import { doc, getDoc, onSnapshot } from 'firebase/firestore'
 import { nextColorKey } from './colors'
 import { db } from './firebase'
+import { createSerializedWriter } from './firestoreSync'
 
 const STORAGE_KEY = 'workCategories'
 
@@ -32,6 +33,7 @@ function makeId() {
 // onSnapshot keeps this device and any other signed-in device in sync.
 export function useCategories(uid) {
   const [categories, setCategories] = useState(uid ? [] : loadLocalCategories)
+  const [writeToFirestore] = useState(() => createSerializedWriter())
 
   useEffect(() => {
     if (!uid) {
@@ -42,7 +44,7 @@ export function useCategories(uid) {
     let cancelled = false
     getDoc(ref).then((snap) => {
       if (cancelled || snap.data()?.categories !== undefined) return
-      setDoc(ref, { categories: loadLocalCategories() }, { merge: true }).catch((err) => console.error(err))
+      writeToFirestore(uid, 'categories', loadLocalCategories())
     })
     const unsubscribe = onSnapshot(ref, (snap) => {
       const cloudCategories = snap.data()?.categories
@@ -52,7 +54,7 @@ export function useCategories(uid) {
       cancelled = true
       unsubscribe()
     }
-  }, [uid])
+  }, [uid, writeToFirestore])
 
   useEffect(() => {
     if (uid) return
@@ -66,7 +68,7 @@ export function useCategories(uid) {
   function commit(updater) {
     setCategories((prev) => {
       const next = updater(prev)
-      if (uid) setDoc(doc(db, 'users', uid), { categories: next }, { merge: true }).catch((err) => console.error(err))
+      if (uid) writeToFirestore(uid, 'categories', next)
       return next
     })
   }

@@ -18,7 +18,8 @@ export default function App() {
   const [showRepeatModal, setShowRepeatModal] = useState(false)
   const { user, authLoading, firebaseEnabled, signInWithGoogle, signOutUser } = useAuth()
   const uid = user?.uid ?? null
-  const { schedules, addSchedule, updateSchedule, deleteSchedule, clearCategory } = useSchedules(uid)
+  const { schedules, addSchedule, updateSchedule, deleteSchedule, deleteScheduleSeries, deleteScheduleSeriesFrom, clearCategory } =
+    useSchedules(uid)
   const { categories, addCategory, removeCategory, updateCategory, setCategoryNoBreak } = useCategories(uid)
 
   const categoriesById = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c])), [categories])
@@ -135,6 +136,8 @@ export default function App() {
           onAdd={addSchedule}
           onUpdate={updateSchedule}
           onDelete={deleteSchedule}
+          onDeleteSeries={deleteScheduleSeries}
+          onDeleteSeriesFrom={deleteScheduleSeriesFrom}
           onAddCategory={addCategory}
           onSetCategoryNoBreak={setCategoryNoBreak}
         />

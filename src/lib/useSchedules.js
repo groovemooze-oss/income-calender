@@ -1,11 +1,19 @@
 import { useEffect, useState } from 'react'
-import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore'
+import { doc, getDoc, onSnapshot } from 'firebase/firestore'
 import { db } from './firebase'
+import { createSerializedWriter } from './firestoreSync'
 
 const STORAGE_KEY = 'workSchedules'
 
 function makeId() {
   return `sch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+}
+
+// Set on every entry created via RepeatScheduleModal's batch — entries from
+// the same submission share one id, so they can later be deleted together
+// ("이후 일정 삭제" / "전체 일정 삭제") without touching other schedules.
+function makeRecurringId() {
+  return `rec_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
 
 function isValidEntryShape(entry) {
@@ -21,6 +29,7 @@ function normalizeEntry(date, entry) {
     breakMinutes: Number(entry.breakMinutes) || 0,
     categoryId: entry.categoryId || null,
     noBreak: !!entry.noBreak,
+    recurringId: entry.recurringId || null,
   }
 }
 
@@ -60,6 +69,7 @@ function loadLocalSchedules() {
 // onSnapshot keeps this device and any other signed-in device in sync.
 export function useSchedules(uid) {
   const [schedules, setSchedules] = useState(uid ? {} : loadLocalSchedules)
+  const [writeToFirestore] = useState(() => createSerializedWriter())
 
   useEffect(() => {
     if (!uid) {
@@ -70,7 +80,7 @@ export function useSchedules(uid) {
     let cancelled = false
     getDoc(ref).then((snap) => {
       if (cancelled || snap.data()?.schedules !== undefined) return
-      setDoc(ref, { schedules: loadLocalSchedules() }, { merge: true }).catch((err) => console.error(err))
+      writeToFirestore(uid, 'schedules', loadLocalSchedules())
     })
     const unsubscribe = onSnapshot(ref, (snap) => {
       const cloudSchedules = snap.data()?.schedules
@@ -80,7 +90,7 @@ export function useSchedules(uid) {
       cancelled = true
       unsubscribe()
     }
-  }, [uid])
+  }, [uid, writeToFirestore])
 
   useEffect(() => {
     if (uid) return
@@ -95,12 +105,12 @@ export function useSchedules(uid) {
   function commit(updater) {
     setSchedules((prev) => {
       const next = updater(prev)
-      if (uid) setDoc(doc(db, 'users', uid), { schedules: next }, { merge: true }).catch((err) => console.error(err))
+      if (uid) writeToFirestore(uid, 'schedules', next)
       return next
     })
   }
 
-  function addSchedule({ date, startTime, endTime, breakMinutes, categoryId, noBreak }) {
+  function addSchedule({ date, startTime, endTime, breakMinutes, categoryId, noBreak, recurringId }) {
     const entry = {
       id: makeId(),
       date,
@@ -109,6 +119,7 @@ export function useSchedules(uid) {
       breakMinutes: noBreak ? 0 : Number(breakMinutes) || 0,
       categoryId: categoryId || null,
       noBreak: !!noBreak,
+      recurringId: recurringId || null,
     }
     commit((prev) => ({ ...prev, [date]: [...(prev[date] || []), entry] }))
     return entry
@@ -145,6 +156,31 @@ export function useSchedules(uid) {
     })
   }
 
+  // Removes every entry from the given recurring batch, past or future.
+  function deleteScheduleSeries(recurringId) {
+    commit((prev) => {
+      const next = {}
+      for (const [date, entries] of Object.entries(prev)) {
+        const remaining = entries.filter((e) => e.recurringId !== recurringId)
+        if (remaining.length > 0) next[date] = remaining
+      }
+      return next
+    })
+  }
+
+  // Removes entries from the given recurring batch dated on/after fromDate,
+  // leaving earlier occurrences (and everything outside the batch) intact.
+  function deleteScheduleSeriesFrom(recurringId, fromDate) {
+    commit((prev) => {
+      const next = {}
+      for (const [date, entries] of Object.entries(prev)) {
+        const remaining = entries.filter((e) => !(e.recurringId === recurringId && date >= fromDate))
+        if (remaining.length > 0) next[date] = remaining
+      }
+      return next
+    })
+  }
+
   // Detach a deleted category from any schedules that still reference it.
   function clearCategory(categoryId) {
     commit((prev) => {
@@ -156,8 +192,18 @@ export function useSchedules(uid) {
     })
   }
 
-  return { schedules, addSchedule, updateSchedule, deleteSchedule, clearCategory }
+  return {
+    schedules,
+    addSchedule,
+    updateSchedule,
+    deleteSchedule,
+    deleteScheduleSeries,
+    deleteScheduleSeriesFrom,
+    clearCategory,
+  }
 }
+
+export { makeRecurringId }
 
 // Flattens the { date: entry[] } map into a single list of entries.
 export function allEntries(schedules) {
