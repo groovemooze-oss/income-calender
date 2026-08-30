@@ -33,6 +33,19 @@ function normalizeEntry(date, entry) {
   }
 }
 
+// Groups an entry into a "series" for the bulk-delete options. Entries
+// created via RepeatScheduleModal after recurringId was introduced use it
+// directly (precise: only that exact batch matches). Older entries — and
+// any two manually-added entries that just happen to share a workplace and
+// time — have no recurringId, so they fall back to a signature of their
+// shape; anything else with that same signature is treated as the same
+// series. This is what makes "이후 일정 삭제" / "전체 일정 삭제" work on
+// schedules created before recurringId existed, without a data migration.
+function seriesKeyOf(entry) {
+  if (entry.recurringId) return `id:${entry.recurringId}`
+  return `sig:${entry.categoryId}|${entry.startTime}|${entry.endTime}|${entry.breakMinutes}|${entry.noBreak}`
+}
+
 // Migrates older storage shapes into the current one: { date: entry[] }.
 // Earlier versions stored one entry object per date (no array); those get
 // wrapped. Anything unrecognized is dropped rather than left to crash
@@ -156,25 +169,25 @@ export function useSchedules(uid) {
     })
   }
 
-  // Removes every entry from the given recurring batch, past or future.
-  function deleteScheduleSeries(recurringId) {
+  // Removes every entry in the given series (see seriesKeyOf), past or future.
+  function deleteScheduleSeries(seriesKey) {
     commit((prev) => {
       const next = {}
       for (const [date, entries] of Object.entries(prev)) {
-        const remaining = entries.filter((e) => e.recurringId !== recurringId)
+        const remaining = entries.filter((e) => seriesKeyOf(e) !== seriesKey)
         if (remaining.length > 0) next[date] = remaining
       }
       return next
     })
   }
 
-  // Removes entries from the given recurring batch dated on/after fromDate,
-  // leaving earlier occurrences (and everything outside the batch) intact.
-  function deleteScheduleSeriesFrom(recurringId, fromDate) {
+  // Removes entries in the given series dated on/after fromDate, leaving
+  // earlier occurrences (and everything outside the series) intact.
+  function deleteScheduleSeriesFrom(seriesKey, fromDate) {
     commit((prev) => {
       const next = {}
       for (const [date, entries] of Object.entries(prev)) {
-        const remaining = entries.filter((e) => !(e.recurringId === recurringId && date >= fromDate))
+        const remaining = entries.filter((e) => !(seriesKeyOf(e) === seriesKey && date >= fromDate))
         if (remaining.length > 0) next[date] = remaining
       }
       return next
@@ -203,7 +216,7 @@ export function useSchedules(uid) {
   }
 }
 
-export { makeRecurringId }
+export { makeRecurringId, seriesKeyOf }
 
 // Flattens the { date: entry[] } map into a single list of entries.
 export function allEntries(schedules) {

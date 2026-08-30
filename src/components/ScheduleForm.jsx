@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { workedMinutes, formatHours } from '../lib/date'
-import { findLatestByCategory } from '../lib/useSchedules'
+import { allEntries, findLatestByCategory, seriesKeyOf } from '../lib/useSchedules'
 import { calculatePay, calculateNetPay, formatWon } from '../lib/pay'
 import { colorFor } from '../lib/colors'
 import TimeSelect from './TimeSelect'
@@ -103,8 +103,13 @@ export default function ScheduleForm({
     resetToNewEntry()
   }
 
+  // Offers the this-only/from-here/whole-series choice only when this entry
+  // actually belongs to a group of 2+ (see seriesKeyOf) — a genuinely
+  // standalone entry just deletes immediately, same as before.
   function requestDeleteEntry(entry) {
-    if (entry.recurringId) {
+    const key = seriesKeyOf(entry)
+    const hasSiblings = allEntries(schedules).some((e) => e.id !== entry.id && seriesKeyOf(e) === key)
+    if (hasSiblings) {
       setConfirmDeleteEntry(entry)
     } else {
       handleDeleteEntry(entry.id)
@@ -122,13 +127,13 @@ export default function ScheduleForm({
   }
 
   function handleDeleteFromHereOn() {
-    onDeleteSeriesFrom(confirmDeleteEntry.recurringId, date)
+    onDeleteSeriesFrom(seriesKeyOf(confirmDeleteEntry), date)
     if (editingEntryId === confirmDeleteEntry.id) resetToNewEntry()
     setConfirmDeleteEntry(null)
   }
 
   function handleDeleteWholeSeries() {
-    onDeleteSeries(confirmDeleteEntry.recurringId)
+    onDeleteSeries(seriesKeyOf(confirmDeleteEntry))
     if (editingEntryId === confirmDeleteEntry.id) resetToNewEntry()
     setConfirmDeleteEntry(null)
   }
